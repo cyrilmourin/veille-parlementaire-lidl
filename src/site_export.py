@@ -75,16 +75,17 @@ WINDOW_DAYS_BY_CATEGORY: dict[str, int] = {
     # STRICT_DATED_CATEGORIES ci-dessous, ça garantit qu'aucun item sans
     # `published_at` valide ne passe via le fallback `inserted_at`.
     "questions": 90,
-    # R36-G (2026-04-24) : amendements 30 → 90j. Cyril veut la même fenêtre
-    # que les questions — un amendement déposé en commission il y a 2 mois
-    # peut encore être utile au suivi, et certaines navettes durent > 30j.
-    # Le volume reste maîtrisé (quelques amendements matchés / mois côté
-    # sport).
-    "amendements": 90,
-    # R36-K (2026-04-24) : JORF 30 → 90j. Cyril : la fenêtre 30j faisait
-    # sortir du radar des arrêtés sport intéressants pris il y a ~2 mois
-    # (nominations mises à part, elles ont leur propre page).
-    "jorf": 90,
+    # R36-G (2026-04-24) : amendements 30 → 90j sur sport.
+    # Lidl (2026-04-24) : porté à 180j (6 mois) — les dossiers grande
+    # distribution (EGalim, urbanisme commercial, travail dominical)
+    # ont des cycles longs et très peu d'amendements matchent dans
+    # une fenêtre 3 mois.
+    "amendements": 180,
+    # R36-K (2026-04-24) : JORF 30 → 90j sur sport.
+    # Lidl (2026-04-24) : porté à 180j (6 mois) — le JO touche peu
+    # souvent la distribution alimentaire et une fenêtre 3 mois
+    # produisait zéro item sur le périmètre Lidl.
+    "jorf": 180,
 }
 
 # R36-J (2026-04-24) — Override par source_id pour la sous-catégorie
