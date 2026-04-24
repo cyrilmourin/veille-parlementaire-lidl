@@ -122,26 +122,12 @@ a:hover { text-decoration: underline; }
   padding-top: 22px;
   padding-bottom: 18px;
 }
-/* Nouvelle structure co-brandée : une ligne unique pour brand Sideline +
-   logo client Lidl + hamburger, puis la nav sous-jacente. */
+/* Structure de la première ligne du header (logo + texte + hamburger). */
 .brand-row {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
-}
-/* Logo client (Lidl) à droite du header. Fond blanc pour que les couleurs
-   Lidl (jaune sur rouge sur bleu) ressortent du header bleu Lidl. */
-.client-logo {
-  margin-left: auto;
-  max-height: 72px;
-  width: auto;
-  flex: 0 0 auto;
-  background: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  object-fit: contain;
-  display: block;
 }
 .brand {
   color: var(--sl-cream);
@@ -581,6 +567,12 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
   color: var(--sl-blue);
   font-size: 15.5px;
+  /* R36-D (2026-04-24) : léger resserrement des caractères + réduction
+     d'interligne sur les titres d'occurrences (demande Cyril). Ne
+     concerne QUE les titres d'items, pas les titres de catégorie ni
+     les H1/H2 de page. */
+  letter-spacing: -0.2px;
+  line-height: 1.35;
 }
 .items li a.title:hover { color: var(--sl-red); text-decoration: none; }
 /* Item sans URL publique (ex : réunions AN) : rendu titre en texte simple */
@@ -590,6 +582,8 @@ a:hover { text-decoration: underline; }
   color: var(--sl-blue);
   font-size: 15.5px;
   display: inline-block;
+  letter-spacing: -0.2px;
+  line-height: 1.35;
 }
 .items .meta {
   color: var(--muted); font-size: 12.5px;
@@ -854,22 +848,18 @@ a:hover { text-decoration: underline; }
   height: auto;
 }
 
-/* Module recherche dans la sidebar.
-   R13-G : plus de gradient (demande Cyril) — fond bleu Sideline uni,
-   police crème pour cohérence avec le header.
-   R22+ (2026-04-23) : fond ajusté à #11264b (bleu marine plus profond
-   que le --sl-blue d'origine) sur demande Cyril. Border + bouton
-   alignés sur la même teinte pour conserver l'harmonie visuelle. */
+/* Module recherche — Lidl : fond jaune Lidl (#FFE500), texte et bouton
+   bleu Lidl pour contraste AA conforme. */
 .side-card--search {
-  background: #11264b;
-  color: var(--sl-cream);
-  border-color: #11264b;
+  background: var(--lidl-yellow);
+  color: var(--lidl-blue);
+  border-color: var(--lidl-yellow);
 }
 .side-card--search .side-title {
-  color: var(--sl-cream);
+  color: var(--lidl-blue);
 }
 .side-card--search .side-caption {
-  color: rgba(238, 232, 209, 0.75);
+  color: rgba(14, 42, 71, 0.75);
 }
 .side-search {
   display: flex;
@@ -879,7 +869,7 @@ a:hover { text-decoration: underline; }
 .side-search input[type="search"] {
   flex: 1 1 auto;
   min-width: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--lidl-blue);
   border-radius: 6px;
   padding: 8px 10px;
   font-family: var(--font);
@@ -888,16 +878,15 @@ a:hover { text-decoration: underline; }
   color: var(--fg);
 }
 .side-search input[type="search"]:focus {
-  outline: 2px solid var(--sl-blue);
+  outline: 2px solid var(--lidl-red);
   outline-offset: 1px;
-  border-color: var(--sl-blue);
+  border-color: var(--lidl-red);
 }
 .side-search button {
   flex: 0 0 36px;
   border: 0;
   border-radius: 6px;
-  /* R22+ (2026-04-23) : aligné sur le nouveau fond carte #11264b. */
-  background: #11264b;
+  background: var(--lidl-blue);
   color: #fff;
   font-size: 18px;
   font-weight: 700;
@@ -905,7 +894,7 @@ a:hover { text-decoration: underline; }
   line-height: 1;
 }
 .side-search button:hover {
-  background: var(--sl-red);
+  background: var(--lidl-red);
 }
 .visually-hidden {
   position: absolute !important;
@@ -1141,8 +1130,10 @@ a:hover { text-decoration: underline; }
   font-family: var(--font-title);
   font-size: 17px;
   font-weight: 800;
-  line-height: 1.3;
-  letter-spacing: -0.2px;
+  /* R36-D (2026-04-24) : -0.3px d'interligne supplémentaire, déjà
+     resserré -0.2px côté letter-spacing depuis la maquette. */
+  line-height: 1.27;
+  letter-spacing: -0.4px;
 }
 .dosleg-card__title a {
   color: var(--sl-blue);
@@ -1223,14 +1214,24 @@ a:hover { text-decoration: underline; }
   font-weight: 600;
 }
 @media (max-width: 640px) {
+  /* R36-C (2026-04-24) : en mobile on garde le logo à gauche et le titre
+     à droite (row) plutôt que de basculer en column, qui envoyait le titre
+     en dessous du logo et cassait la lecture. Cyril a remonté le
+     désalignement le 2026-04-24. On réduit juste le gap et la taille du
+     logo pour économiser de la largeur. */
   .dosleg-list .dosleg-card {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 12px;
+    padding: 14px 14px 12px;
   }
   .dosleg-card__icon {
-    width: 48px;
-    height: 48px;
-    flex: 0 0 48px;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    align-self: flex-start;
+  }
+  .dosleg-card__title {
+    font-size: 15.5px;
   }
   .dosleg-card__links {
     justify-content: flex-start;
@@ -1559,18 +1560,18 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
 }
 
-/* Lien recherche dans le header (accent subtil) */
+/* Lien recherche dans le header — Lidl : fond jaune, texte bleu. */
 .nav a.nav-search {
-  background: var(--sl-red);
-  /* R15 (2026-04-22) : padding H aligné sur les autres entrées (5px)
-     pour conserver une hauteur visuelle homogène après la refonte. */
-  padding: 4px 5px;
+  background: var(--lidl-yellow);
+  color: var(--lidl-blue);
+  padding: 4px 8px;
   border-radius: 4px;
+  font-weight: 700;
   opacity: 1;
 }
 .nav a.nav-search:hover {
   background: #fff;
-  color: var(--sl-blue);
+  color: var(--lidl-blue);
   border-bottom: 0;
 }
 

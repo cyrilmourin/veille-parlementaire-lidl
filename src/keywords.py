@@ -267,16 +267,23 @@ class KeywordMatcher:
     def apply(self, items: Iterable):
         """Annote in-place une liste d'Item (matched_keywords + snippet).
 
-        Si `item.raw` contient `haystack_body` (ex. JORF NOTICE+CID), on
-        l'ajoute au match pour capter les textes au titre générique mais
-        au corps pertinent. Le snippet reste construit depuis le summary.
+        Si `item.raw` contient `haystack_body` (JORF NOTICE+CID, CR AN)
+        ou `libelles_haystack` (R36-E — cumul des libellés d'actes d'un
+        dossier AN), on les ajoute au match pour capter les textes au
+        titre générique mais au corps pertinent. Le snippet reste
+        construit depuis le summary.
         """
         for item in items:
-            extra_haystack = ""
+            extras: list[str] = []
             raw = getattr(item, "raw", None)
             if isinstance(raw, dict):
-                extra_haystack = raw.get("haystack_body") or ""
-            kws, fams = self.match(item.title, item.summary, extra_haystack)
+                hb = raw.get("haystack_body") or ""
+                if hb:
+                    extras.append(hb)
+                lh = raw.get("libelles_haystack") or ""
+                if lh:
+                    extras.append(lh)
+            kws, fams = self.match(item.title, item.summary, *extras)
             item.matched_keywords = kws
             item.keyword_families = fams
             item.snippet = self.build_snippet(item.summary or item.title or "")
