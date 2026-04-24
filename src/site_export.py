@@ -25,7 +25,7 @@ from .digest import CATEGORY_LABELS, CATEGORY_ORDER
 # (R13-J : déplacé depuis la sidebar) pour que Cyril puisse identifier
 # rapidement quelle révision du pipeline a généré la page en ligne. À
 # incrémenter à chaque cumul de patches UX.
-SYSTEM_VERSION_LABEL = "Lidl-R37"
+SYSTEM_VERSION_LABEL = "Lidl-R38"
 
 # Fenêtre de publication visible sur le site (jours) — par défaut pour les
 # flux à forte rotation (questions, CR, amendements, communiqués, agenda).
@@ -2396,7 +2396,10 @@ def _write_category_indexes(items_dir: Path, by_cat: dict[str, list[dict]]):
         # dédié (layouts/communiques/list.html inexistant) : Hugo
         # retombera sur _default/list.html qui rend correctement la
         # page + le filtre une fois .Type résolu.
-        SPECIFIC_LAYOUT_CATS = {"agenda", "dossiers_legislatifs", "communiques"}
+        # R38-B (2026-04-24) : `comptes_rendus` ajouté au set pour que Hugo
+        # résolve .Type="comptes_rendus" et bascule sur le layout carte
+        # (layouts/comptes_rendus/list.html) au lieu de _default/list.html.
+        SPECIFIC_LAYOUT_CATS = {"agenda", "dossiers_legislatifs", "communiques", "comptes_rendus"}
         lines = [
             "---",
             f'title: "{label}"',
@@ -2758,6 +2761,12 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
                 fm.append(f'report_type: "{report_type}"')
             if report_label:
                 fm.append(f'report_label: "{report_label}"')
+            # R38-D / R38-E (2026-04-24) — expose le libellé de commission
+            # (CR hebdo Sénat R37-A) comme sous-titre du CR. Absent pour
+            # les CR de séance plénière (syceron, debats, cri).
+            commission = (raw.get("commission") or "").strip().replace('"', "'")
+            if commission:
+                fm.append(f'commission: "{commission}"')
         fm += [
             "---",
             "",

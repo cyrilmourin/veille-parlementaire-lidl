@@ -1092,67 +1092,6 @@ a:hover { text-decoration: underline; }
 .cr-badge-analytique { background: var(--sl-green); }
 .cr-badge-integral   { background: var(--sl-blue); }
 
-/* ---------- Listing : Comptes rendus (R38-D, filtres checkboxes) --------
-   Les `.cr-card` partagent les règles `.dosleg-card`. Le badge
-   analytique/intégral sous le titre a été retiré en R38-D (demande
-   Cyril). À la place, on affiche `.cr-card__commission` pour les CR
-   hebdo de commission Sénat (R37-A/R38-E). */
-.cr-card__commission {
-  margin: 2px 0 6px;
-  font-size: 13px;
-  color: var(--muted);
-  font-weight: 500;
-  font-style: italic;
-}
-
-/* R38-D — filtres checkboxes sur /items/comptes_rendus/.
-   Deux groupes indépendants (chambre × type). */
-.cr-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px 24px;
-  margin: 14px 0 18px;
-  padding: 12px 14px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-.cr-filter-group {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 14px;
-}
-.cr-filter-group legend {
-  font-family: var(--font-title);
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--fg);
-  margin-right: 8px;
-  padding: 0;
-}
-.cr-filter-group label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--fg);
-  user-select: none;
-}
-.cr-filter-group input[type="checkbox"] {
-  accent-color: var(--sl-blue);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-}
-@media (max-width: 640px) {
-  .cr-filters { flex-direction: column; gap: 10px; }
-}
-
 /* ---------- Listing : Dossiers législatifs (maquette type AN) ---------- */
 .dosleg-list .dosleg-card {
   display: flex;
