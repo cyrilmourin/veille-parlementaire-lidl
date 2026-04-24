@@ -57,7 +57,11 @@
           data-chamber-short="{{ $chamShort }}">
         {{ if or (eq $chamShort "an") (eq $chamShort "senat") }}
           <div class="dosleg-card__icon" aria-hidden="true">
-            <img src="/logos/{{ $chamShort }}.svg" alt="{{ $cham }}" title="{{ $cham }}" loading="lazy" decoding="async" width="56" height="56">
+            {{/* Fix Cyril (2026-04-24) : .png (logos officiels AN/Sénat) et
+                 non .svg — les SVG /logos/*.svg sont des pictos génériques
+                 différents. Cohérent avec layouts/dossiers_legislatifs/
+                 list.html qui utilise déjà les .png. */}}
+            <img src="/logos/{{ $chamShort }}.png" alt="{{ $cham }}" title="{{ $cham }}" loading="lazy" decoding="async" width="56" height="56">
           </div>
         {{ else }}
           <div class="dosleg-card__icon" aria-hidden="true">{{ partial "chamber-badge.html" $cham }}</div>
