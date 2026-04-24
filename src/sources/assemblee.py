@@ -1151,6 +1151,19 @@ def _normalize_dosleg(obj, src, cat):
         for tref in local_refs:
             _TEXTE_TO_LIBELLES_ACCUM.setdefault(tref, libelles_haystack)
 
+    # P4 (2026-04-25) — haystack_body via scraping dossier HTML + PDFs.
+    # Scrape la page /dyn/17/dossiers/<uid>, extrait les PDF du texte
+    # initial + rapports, extrait le texte via pypdf. Cache disque dans
+    # data/cache/dosleg_pdf/<uid>.txt pour ne pas re-télécharger à
+    # chaque run. Best-effort : timeout/404/PDF illisible → haystack
+    # vide, pas bloquant.
+    haystack_body = ""
+    try:
+        from . import assemblee_dosleg_pdf  # import local pour ne pas charger si jamais utilisé
+        haystack_body = assemblee_dosleg_pdf.fetch_pdf_haystack(uid)
+    except Exception as e:
+        log.debug("Dosleg haystack_body KO %s : %s", uid, e)
+
     yield Item(
         source_id=src["id"],
         uid=uid,
@@ -1187,6 +1200,12 @@ def _normalize_dosleg(obj, src, cat):
             # matcher mots-clés. Non affiché en UI (consommé uniquement
             # par `KeywordMatcher.apply` qui concatène title+summary+raw).
             "libelles_haystack": libelles_haystack,
+            # P4 (2026-04-25) — texte complet des PDF (texte initial +
+            # rapports de commission) pour permettre au matcher de capter
+            # les mots-clés dans l'exposé des motifs / dispositif /
+            # synthèse du rapport, quand le titre du dossier est trop
+            # générique. Cf. src/sources/assemblee_dosleg_pdf.py.
+            "haystack_body": haystack_body,
         },
     )
 
