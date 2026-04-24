@@ -67,7 +67,12 @@ assemblee_nationale:
       url: https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/
       format: an_cr_commissions
       max_new_per_run: 10
-      miss_tolerance: 3
+      # miss_tolerance élevé pour le premier run : sans state, on part
+      # de max_num=99 en scan descendant, et la session en cours n'a
+      # que ~30-40 CR par commission. 80 misses tolérés permet d'arriver
+      # jusqu'à num=19, largement assez pour peupler le state. Les runs
+      # suivants (avec state rempli) n'en consommeront que 0-1 par exécution.
+      miss_tolerance: 80
       max_num: 99
 
 # ============================================================================
@@ -182,9 +187,13 @@ senat:
     # affaires économiques (EGalim, négo commerciales), aménagement du
     # territoire (urbanisme commercial), affaires sociales (travail
     # dominical, convention collective commerce).
+    # Slugs Sénat courts vérifiés live 2026-04-24 :
+    #   economie.html, developpement-durable.html, affaires-sociales.html
+    # (les autres variantes testées — affaires-economiques, amenagement-du-
+    # territoire-*, aff-eco, etc. — renvoient toutes 404).
     - id: senat_cr_affaires_economiques
       category: comptes_rendus
-      url: https://www.senat.fr/compte-rendu-commissions/affaires-economiques.html
+      url: https://www.senat.fr/compte-rendu-commissions/economie.html
       format: senat_cr_commissions_html
       commission_label: Commission des affaires économiques (Sénat)
       commission_organe: PO78718
@@ -193,7 +202,7 @@ senat:
 
     - id: senat_cr_amenagement
       category: comptes_rendus
-      url: https://www.senat.fr/compte-rendu-commissions/amenagement-du-territoire-et-du-developpement-durable.html
+      url: https://www.senat.fr/compte-rendu-commissions/developpement-durable.html
       format: senat_cr_commissions_html
       commission_label: Commission de l'aménagement du territoire et du développement durable (Sénat)
       commission_organe: PO78664
