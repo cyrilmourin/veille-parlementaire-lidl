@@ -1209,6 +1209,26 @@ def _format_window_human(days: int) -> str:
         return "1 an"
     return f"{ans} ans"
 
+
+def _format_window_derniers(days: int) -> str:
+    """Formate une fenêtre en phrase « N derniers jours / mois » ou
+    « N dernières années ».
+
+    Correction syntaxique demandée par Cyril (2026-04-24) : on ne dit pas
+    « les 3 ans derniers » mais « les 3 dernières années ». On remplace
+    l'ancien `les {_format_window_human(w)} derniers` par cet helper sur
+    toutes les phrases de libellé catégorie.
+    """
+    if days <= 90:
+        return f"{days} dernier{'s' if days > 1 else ''} jour{'s' if days > 1 else ''}"
+    if days < 365:
+        mois = round(days / 30)
+        return f"{mois} dernier{'s' if mois > 1 else ''} mois"
+    ans = round(days / 365)
+    if ans <= 1:
+        return "dernière année"
+    return f"{ans} dernières années"
+
 # Sous-fenêtre "mises à jour du jour" pour le haut de la home.
 RECENT_HOURS = 24
 
@@ -2181,27 +2201,16 @@ def _fmt_item_line(it: dict, with_tags: bool = True,
     snippet = (it.get("snippet") or "").replace("\n", " ").strip()
 
     # Chambre : badge HTML avec data-chamber pour coloration AN/Senat distincte.
-    # R36-B (2026-04-24) : pour AN / Sénat on pose le logo SVG (cohérent avec
-    # les pages dédiées dosleg/CR qui l'utilisent déjà). Les autres chambres
-    # (CE, CC, Cour des comptes, ARCOM, ANJ, ministères, opérateurs…) restent
-    # en cartouche texte coloré selon la palette R25-E.
+    # (Revert partiel de R36-B : on reprend le cartouche texte dans _fmt_item_line,
+    # qui alimente la home et les pages de listing. Les pages dédiées CR et
+    # dossiers législatifs utilisent leur propre layout avec logo en dur — elles
+    # ne passent pas par cette fonction.)
     chamber_html = ""
     if chamber:
-        lc = chamber.lower()
-        if lc in ("an", "senat", "sénat"):
-            slug = "an" if lc == "an" else "senat"
-            chamber_html = (
-                f'<img class="chamber-logo" src="/logos/{slug}.svg" '
-                f'alt="{_escape(chamber)}" title="{_escape(chamber)}" '
-                f'loading="lazy" decoding="async" '
-                f'onerror="this.style.display=\'none\'" '
-                f'width="22" height="22">'
-            )
-        else:
-            chamber_html = (
-                f'<span class="chamber" data-chamber="{_escape(chamber)}">'
-                f'{_escape(chamber)}</span>'
-            )
+        chamber_html = (
+            f'<span class="chamber" data-chamber="{_escape(chamber)}">'
+            f'{_escape(chamber)}</span>'
+        )
 
     # Statut procédural (dossiers législatifs) : badge dédié à droite de la
     # chambre, ex. "1ère lecture · commission". Source : raw["status_label"]
@@ -2392,16 +2401,17 @@ def _write_category_indexes(items_dir: Path, by_cat: dict[str, list[dict]]):
         # R36-F / R36-J / R36-K (2026-04-24) — libellés de fenêtre spécifiques
         # par catégorie, avec durée exprimée en années quand > 1 an.
         window_human = _format_window_human(window)
+        window_derniers = _format_window_derniers(window)
         if cat == "dossiers_legislatifs":
             # R36-F : "3 ans" plutôt que "1095 jours".
             description = (
                 f"Veille {label.lower()} — {count} dossiers sur les "
-                f"{window_human} derniers."
+                f"{window_derniers}."
             )
             body_line = (
                 f"{count} dossier{'s' if count > 1 else ''} législatif"
                 f"{'s' if count > 1 else ''} dans la veille sur les "
-                f"{window_human} derniers."
+                f"{window_derniers}."
             )
         elif cat == "communiques":
             # R36-J : libellé générique qui couvre à la fois les communiqués
@@ -2425,7 +2435,7 @@ def _write_category_indexes(items_dir: Path, by_cat: dict[str, list[dict]]):
             )
             body_line = (
                 f"{count} texte{'s' if count > 1 else ''} au JO sur les "
-                f"{window_human} derniers, **hors nominations** "
+                f"{window_derniers}, **hors nominations** "
                 "([voir la page Nominations](/items/nominations/))."
             )
         else:
@@ -2435,7 +2445,7 @@ def _write_category_indexes(items_dir: Path, by_cat: dict[str, list[dict]]):
             )
             body_line = (
                 f"{count} publication{'s' if count > 1 else ''} dans cette "
-                f"catégorie sur les {window_human} derniers."
+                f"catégorie sur les {window_derniers}."
             )
 
         lines += [

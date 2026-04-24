@@ -3,20 +3,13 @@
 
   Rend un <span class="chamber" data-chamber="…">…</span> en remplaçant
   le libellé visible par une forme longue lisible pour certaines valeurs
-  (demande Cyril : Conseil d'État, Conseil Constitutionnel, Cour des
-  Comptes — les codes courts "CE" / "CC" / "CourComptes" ne parlent pas
-  au lecteur humain).
+  (Conseil d'État, Conseil Constitutionnel, Cour des Comptes — les codes
+  courts ne parlent pas au lecteur humain).
 
-  Le `data-chamber` reste la valeur courte pour :
-    - continuer de cibler les règles CSS `.chamber[data-chamber="…"]`
-      (palette R25-E),
-    - garder une clé stable pour les filtres JS éventuels.
-
-  Paramètre attendu : le string chamber passé tel quel comme contexte
-  (dot) — ex. `{{ partial "chamber-badge.html" "CE" }}`.
-
-  Si la valeur n'est pas dans le mapping long, on retombe sur le code
-  court tel quel (comportement historique).
+  Revert de R36-B (demande Cyril 2026-04-24) : on reprend le cartouche
+  texte partout. Les pages dédiées dossiers législatifs et comptes
+  rendus utilisent leur propre logo en dur via leur layout spécifique,
+  indépendant de ce partial.
 */}}
 {{ $labels := dict
   "CE"          "Conseil d'État"
@@ -25,17 +18,4 @@
 }}
 {{ $chamber := . }}
 {{ $display := index $labels $chamber | default $chamber -}}
-{{/* R36-B (2026-04-24) — pour les chambres parlementaires AN / Sénat on
-     rend un logo (SVG) à la place du cartouche texte, par cohérence avec
-     les dossiers législatifs et les comptes rendus (qui utilisaient déjà
-     le logo en dur dans leurs layouts dédiés). Ça retire le doublon
-     visuel "logo + badge texte" sur la home + les autres pages catégorie.
-     Les chambres non-parlementaires (CE, CC, ARCOM, ANJ, etc.) restent
-     en span texte avec palette R25-E. */}}
-{{ $lc := lower $chamber }}
-{{ if or (eq $lc "an") (eq $lc "senat") (eq $lc "sénat") -}}
-  {{ $slug := cond (eq $lc "an") "an" "senat" }}
-  <img class="chamber-logo" src="/logos/{{ $slug }}.svg" alt="{{ $display }}" title="{{ $display }}" loading="lazy" decoding="async" onerror="this.style.display='none'" width="22" height="22">
-{{- else -}}
-  <span class="chamber" data-chamber="{{ $chamber }}">{{ $display }}</span>
-{{- end }}
+<span class="chamber" data-chamber="{{ $chamber }}">{{ $display }}</span>

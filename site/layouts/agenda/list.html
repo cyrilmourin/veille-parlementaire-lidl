@@ -41,9 +41,7 @@
     <button type="button" class="sff-btn" data-sff="all" aria-pressed="true">Tout</button>
     <button type="button" class="sff-btn" data-sff="parlement" aria-pressed="false">Parlement</button>
     <button type="button" class="sff-btn" data-sff="gouvernement" aria-pressed="false">Gouvernement</button>
-    <button type="button" class="sff-btn" data-sff="operateurs_publics" aria-pressed="false">Opérateurs publics</button>
-    <button type="button" class="sff-btn" data-sff="autorites" aria-pressed="false">Autres autorités</button>
-    <button type="button" class="sff-btn" data-sff="mouvement_sportif" aria-pressed="false">Mouvement sportif</button>
+    <button type="button" class="sff-btn" data-sff="autorites" aria-pressed="false">Autorités</button>
   </nav>
 
   {{ if $upcoming }}
@@ -71,7 +69,7 @@
         </div>
         <div class="item-meta">
           <span class="meta-main">
-            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006 à 15h04" }}</time>{{ end }}
+            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006" }}{{ if or (ne .Date.Hour 0) (ne .Date.Minute 0) }} à {{ .Date.Format "15h04" }}{{ end }}</time>{{ end }}
           </span>
           {{ with .Params.keywords }}
             <span class="meta-tags">
@@ -111,7 +109,7 @@
         </div>
         <div class="item-meta">
           <span class="meta-main">
-            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006 à 15h04" }}</time>{{ end }}
+            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006" }}{{ if or (ne .Date.Hour 0) (ne .Date.Minute 0) }} à {{ .Date.Format "15h04" }}{{ end }}</time>{{ end }}
           </span>
           {{ with .Params.keywords }}
             <span class="meta-tags">
