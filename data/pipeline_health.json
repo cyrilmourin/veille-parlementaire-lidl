@@ -1,13 +1,13 @@
 {
-  "last_run_at": "2026-04-24T14:09:44",
+  "last_run_at": "2026-04-24T14:52:58",
   "schema_version": 2,
   "sources": {
     "an_agenda": {
       "consecutive_errors": 0,
       "last_error": null,
-      "last_fetched": 665,
+      "last_fetched": 662,
       "last_max_published_at": "2026-07-02T07:30:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_amendements": {
@@ -15,15 +15,15 @@
       "last_error": null,
       "last_fetched": 4189,
       "last_max_published_at": "2026-04-23T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_cr_commissions": {
       "consecutive_errors": 0,
       "last_error": null,
       "last_fetched": 40,
-      "last_max_published_at": "2026-04-24T14:02:56",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_max_published_at": "2026-04-24T14:42:23",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_dossiers_legislatifs": {
@@ -31,7 +31,7 @@
       "last_error": null,
       "last_fetched": 1336,
       "last_max_published_at": "2026-05-13T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_questions_ecrites": {
@@ -39,7 +39,7 @@
       "last_error": null,
       "last_fetched": 773,
       "last_max_published_at": "2026-04-21T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_questions_gouvernement": {
@@ -47,7 +47,7 @@
       "last_error": null,
       "last_fetched": 11,
       "last_max_published_at": "2026-03-26T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_questions_orales_sans_debat": {
@@ -55,7 +55,7 @@
       "last_error": null,
       "last_fetched": 68,
       "last_max_published_at": "2026-04-21T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_rapports": {
@@ -63,7 +63,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "an_syceron": {
@@ -71,7 +71,7 @@
       "last_error": null,
       "last_fetched": 490,
       "last_max_published_at": "2026-04-16T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "autorite_concurrence": {
@@ -79,7 +79,7 @@
       "last_error": null,
       "last_fetched": 31,
       "last_max_published_at": "2026-04-16T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "ccomptes_publications": {
@@ -87,7 +87,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "conseil_etat": {
@@ -95,7 +95,7 @@
       "last_error": null,
       "last_fetched": 20,
       "last_max_published_at": "2026-04-20T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "dgccrf": {
@@ -103,7 +103,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "dila_jorf": {
@@ -111,7 +111,7 @@
       "last_error": null,
       "last_fetched": 1264,
       "last_max_published_at": "2026-04-24T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "elysee_agenda": {
@@ -119,7 +119,7 @@
       "last_error": null,
       "last_fetched": 8,
       "last_max_published_at": "2026-04-23T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "elysee_feed": {
@@ -127,23 +127,23 @@
       "last_error": null,
       "last_fetched": 27,
       "last_max_published_at": "2026-04-23T18:25:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "info_gouv_actualites": {
       "consecutive_errors": 0,
       "last_error": null,
-      "last_fetched": 16,
+      "last_fetched": 0,
       "last_max_published_at": "2026-04-24T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "matignon_actualites": {
       "consecutive_errors": 0,
       "last_error": null,
-      "last_fetched": 16,
+      "last_fetched": 0,
       "last_max_published_at": "2026-04-24T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "min_agriculture": {
@@ -151,15 +151,15 @@
       "last_error": null,
       "last_fetched": 23,
       "last_max_published_at": "2026-05-18T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "min_economie": {
       "consecutive_errors": 0,
       "last_error": null,
-      "last_fetched": 0,
-      "last_max_published_at": "2026-04-25T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_fetched": 52,
+      "last_max_published_at": "2026-04-27T00:00:00",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "min_outremer": {
@@ -167,7 +167,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "min_transition_ecologique": {
@@ -175,7 +175,7 @@
       "last_error": null,
       "last_fetched": 17,
       "last_max_published_at": "2026-04-24T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "rappelconso": {
@@ -183,7 +183,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_agenda_affaires_economiques": {
@@ -191,7 +191,7 @@
       "last_error": null,
       "last_fetched": 3,
       "last_max_published_at": "2026-04-29T09:30:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_agenda_amenagement": {
@@ -199,7 +199,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_akn_adoptions": {
@@ -207,7 +207,7 @@
       "last_error": null,
       "last_fetched": 56,
       "last_max_published_at": "2026-04-15T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_akn_depots": {
@@ -215,7 +215,7 @@
       "last_error": null,
       "last_fetched": 168,
       "last_max_published_at": "2026-04-17T00:00:00",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_amendements": {
@@ -223,7 +223,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_cri": {
@@ -231,7 +231,7 @@
       "last_error": null,
       "last_fetched": 2801,
       "last_max_published_at": "2026-04-24T04:35:30",
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_debats": {
@@ -239,7 +239,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_dosleg": {
@@ -247,7 +247,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_ppl": {
@@ -255,7 +255,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_promulguees": {
@@ -263,7 +263,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_qg": {
@@ -271,7 +271,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_questions": {
@@ -279,7 +279,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_questions_1an": {
@@ -287,7 +287,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_rapports": {
@@ -295,7 +295,7 @@
       "last_error": null,
       "last_fetched": 0,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     },
     "senat_rss": {
@@ -303,7 +303,7 @@
       "last_error": null,
       "last_fetched": 10,
       "last_max_published_at": null,
-      "last_ok_at": "2026-04-24T14:09:44",
+      "last_ok_at": "2026-04-24T14:52:58",
       "stale_alerted": false
     }
   },
@@ -315,6 +315,10 @@
     {
       "date": "2026-04-24T14:09:44",
       "total_fetched": 12032
+    },
+    {
+      "date": "2026-04-24T14:52:58",
+      "total_fetched": 12049
     }
   ]
 }
