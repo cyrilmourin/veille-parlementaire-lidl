@@ -185,6 +185,16 @@ theme_negociations:
   - Shrinkflation
   - Réduflation
   - Reduflation
+  # P1a (2026-04-24) — formulations longues caractéristiques des titres
+  # des textes législatifs GD des 3 dernières années. Ces chaînes n'appa-
+  # raissent quasi nulle part ailleurs → direct sans requires_any.
+  - Marges de la grande distribution
+  - Marges des industriels et de la grande distribution
+  - Équilibre dans les relations commerciales entre fournisseurs et distributeurs
+  - Equilibre dans les relations commerciales entre fournisseurs et distributeurs
+  - Négociations commerciales dans la grande distribution
+  - Negociations commerciales dans la grande distribution
+  - Transparence dans les relations commerciales
 
   # --- Contextuel -----------------------------------------------------------
   # EGalim : contextualisé car le terme circule aussi pour l'agriculture
@@ -323,6 +333,74 @@ theme_negociations:
   # / dossiers AN (la co-occurrence distante avec un mot très générique
   # comme « agriculture » produit du bruit). On exige un signal GD
   # distinctif : négociation commerciale, distributeur, enseigne.
+  # P1b (2026-04-24) — termes fréquents dans les titres législatifs
+  # GD-aval mais trop génériques en direct. requires_any très strict :
+  # on exige la mention d'une enseigne alimentaire OU un marqueur GD
+  # hyper-spécifique (grande distribution alimentaire, centrale d'achat,
+  # EGalim 3, Descrozaille, SRP+10, MDD).
+  - term: Distributeurs
+    mode: contextual
+    requires_any:
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - centrale d'achat
+      - EGalim 3
+      - Descrozaille
+      - SRP+10
+      - MDD
+
+  - term: Fournisseurs
+    mode: contextual
+    requires_any:
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - centrale d'achat
+      - EGalim 3
+      - Descrozaille
+      - SRP+10
+      - MDD
+
+  - term: Relations commerciales
+    mode: contextual
+    requires_any:
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - centrale d'achat
+      - EGalim 3
+      - Descrozaille
+      - SRP+10
+      - MDD
+
   - term: Contrats amont
     mode: contextual
     requires_any:

@@ -500,6 +500,15 @@ def fetch_source(src: dict) -> list[Item]:
             log.warning("Flush cache texte→dossier KO : %s", e)
         _TEXTE_TO_DOSSIER_ACCUM.clear()
 
+    # P5 (2026-04-25) — flush du cache texte_ref → libelles_haystack pour
+    # alimenter les amendements au prochain parcours.
+    if src["id"] == "an_dossiers_legislatifs" and _TEXTE_TO_LIBELLES_ACCUM:
+        try:
+            amo_loader.write_texte_libelles_cache(_TEXTE_TO_LIBELLES_ACCUM)
+        except Exception as e:
+            log.warning("Flush cache texte→libelles KO : %s", e)
+        _TEXTE_TO_LIBELLES_ACCUM.clear()
+
     return items
 
 
@@ -693,8 +702,12 @@ def _normalize_amendement(obj, src, cat):
     # "sport", "clubs sportifs") ressortent dans le haystack du matcher.
     texte_ref = _text_of(_first(root, "texteLegislatifRef", default=""))
     dossier_titre = ""
+    dossier_libelles = ""
     if texte_ref:
         dossier_titre = amo_loader.resolve_texte_dossier(texte_ref) or ""
+        # P5 (2026-04-25) — haystack procédural du dossier parent, utilisé
+        # côté matcher via raw.libelles_haystack (cf. keywords.apply).
+        dossier_libelles = amo_loader.resolve_texte_libelles(texte_ref) or ""
 
     # Summary ciblé : on va DIRECTEMENT au contenu utile pour le matching
     # (dispositif + exposé sommaire) en les mettant en tête. Le shotgun
@@ -778,6 +791,9 @@ def _normalize_amendement(obj, src, cat):
              ),
              "dossier": dossier_titre,
              "texte_ref": texte_ref,
+             # P5 (2026-04-25) — haystack cumulé des libellés d'actes du
+             # dossier parent, lu par keywords.apply (extras).
+             "libelles_haystack": dossier_libelles,
              # R13-J : sort / etat séparés pour que site_export puisse
              # générer le chip coloré (sort > etat comme fallback).
              # R23-A : sousEtat ajouté comme fallback intermédiaire (utile
@@ -945,6 +961,12 @@ _DOSLEG_MAX_AGE_PROMULGATED_DAYS = 548  # promulgués : < 18 mois
 # pour que le titre du dossier parent (ex : "Sécurité des JO 2024") figure
 # dans le haystack matching des amendements (R11b).
 _TEXTE_TO_DOSSIER_ACCUM: dict[str, str] = {}
+
+# P5 (2026-04-25) — idem pour libelles_haystack. Permet aux amendements
+# d'hériter du cumul des libellés d'actes de leur dossier parent côté
+# matcher mots-clés (sans ça, le matcher ne voyait que title+summary de
+# l'amendement). Même mécanique d'accumulation que _TEXTE_TO_DOSSIER_ACCUM.
+_TEXTE_TO_LIBELLES_ACCUM: dict[str, str] = {}
 
 # Pattern d'identifiant de texte législatif AN (préfixes validés via JSON
 # unitaire `/dyn/opendata/<uid>.json`, avril 2026) :
@@ -1117,6 +1139,17 @@ def _normalize_dosleg(obj, src, cat):
             seen_lib.add(lib)
             libelles_uniq.append(lib)
     libelles_haystack = " · ".join(libelles_uniq[-40:])[:3000]
+
+    # P5 (2026-04-25) — alimenter aussi le cache texte_ref → libelles pour
+    # que _normalize_amendement puisse l'injecter dans raw.libelles_haystack.
+    # On récupère la liste des texte_refs du dossier courant via un dict
+    # temporaire (_harvest_texte_refs parcourt l'arbre entier) puis on
+    # mappe chacune des références vers le libelles_haystack cumulé.
+    if libelles_haystack:
+        local_refs: dict[str, str] = {}
+        _harvest_texte_refs(root, titre, local_refs)
+        for tref in local_refs:
+            _TEXTE_TO_LIBELLES_ACCUM.setdefault(tref, libelles_haystack)
 
     yield Item(
         source_id=src["id"],

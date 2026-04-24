@@ -92,25 +92,34 @@ senat:
       format: akn_index
       since_days: 90
 
+    # P2 (2026-04-25) — les dumps Sénat ne sont plus livrés sous .csv.zip
+    # mais en CSV directs à /data/dosleg/<nom>.csv. Les anciennes URLs
+    # (/data/dosleg/dosleg.csv.zip, /data/ppl/ppl.csv.zip, etc.) renvoient
+    # toutes 404 depuis un moment — c'est la cause des 0 items Sénat
+    # observés sur la page dossiers législatifs. Vérifié live :
+    #   - dossiers-legislatifs.csv : 3,6 Mo (CSV latin-1, ; comme séparateur)
+    #   - ppl.csv                  : 3,8 Mo
+    #   - rapports.csv             : 4,9 Mo
+    #   - promulguees.csv          : 1,3 Mo
     - id: senat_dosleg
       category: dossiers_legislatifs
-      url: https://data.senat.fr/data/dosleg/dosleg.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/dosleg/dossiers-legislatifs.csv
+      format: csv
 
     - id: senat_ppl
       category: dossiers_legislatifs
-      url: https://data.senat.fr/data/ppl/ppl.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/dosleg/ppl.csv
+      format: csv
 
     - id: senat_rapports
       category: communiques
-      url: https://data.senat.fr/data/rapports/rapports.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/dosleg/rapports.csv
+      format: csv
 
     - id: senat_promulguees
       category: dossiers_legislatifs
-      url: https://data.senat.fr/data/loisprom/loisprom.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/dosleg/promulguees.csv
+      format: csv
 
     - id: senat_amendements
       category: amendements
