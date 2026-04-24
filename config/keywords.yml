@@ -319,12 +319,13 @@ theme_negociations:
       - commerce alimentaire
 
   # Règle Cyril (2026-04-24) : EGalim seul ne valide PAS ces termes —
-  # sinon un texte 'EGalim + agriculteurs' passe sans signal distribution.
-  # On exige grande distribution / négociation commerciale / enseigne.
+  # et « grande distribution » seul non plus pour les textes longs JORF
+  # / dossiers AN (la co-occurrence distante avec un mot très générique
+  # comme « agriculture » produit du bruit). On exige un signal GD
+  # distinctif : négociation commerciale, distributeur, enseigne.
   - term: Contrats amont
     mode: contextual
     requires_any:
-      - grande distribution
       - négociation commerciale
       - distributeur
       - enseigne
@@ -332,26 +333,17 @@ theme_negociations:
   - term: Matière première agricole
     mode: contextual
     requires_any:
-      - grande distribution
       - négociation commerciale
       - distributeur
       - enseigne
 
-  - term: Agriculture
-    mode: contextual
-    requires_any:
-      - grande distribution
-      - négociation commerciale
-      - distributeur
-      - enseigne
-
-  - term: Agriculteurs
-    mode: contextual
-    requires_any:
-      - grande distribution
-      - négociation commerciale
-      - distributeur
-      - enseigne
+  # Note Cyril (2026-04-24) : « Agriculture » et « Agriculteurs » retirés
+  # du lexique. Ces mots sont omniprésents dans les textes officiels (JORF,
+  # dossiers AN) et la simple co-occurrence d'un signal GD ailleurs dans
+  # un long haystack générait trop de bruit (ex. JORF article sur PAC
+  # mentionnant incidemment la distribution). Les textes qui touchent
+  # réellement la GD alimentaire contiennent toujours un signal plus
+  # spécifique (EGalim, SRP+10, centrales d'achat, nom d'enseigne, etc.).
 
 # ============================================================================
 # THEME — urbanisme commercial, implantation

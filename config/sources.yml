@@ -175,6 +175,40 @@ senat:
       commission_label: Commission aménagement du territoire et développement durable
       commission_organe: PO78664
 
+    # --- R37-A (2026-04-24) — CR commissions Sénat -------------------------
+    # Scrape /compte-rendu-commissions/<slug>.html (listing hebdo) puis
+    # fetch chaque CR unitaire pour alimenter haystack_body. Trois
+    # commissions retenues côté Lidl (cœur grande distribution) :
+    # affaires économiques (EGalim, négo commerciales), aménagement du
+    # territoire (urbanisme commercial), affaires sociales (travail
+    # dominical, convention collective commerce).
+    - id: senat_cr_affaires_economiques
+      category: comptes_rendus
+      url: https://www.senat.fr/compte-rendu-commissions/affaires-economiques.html
+      format: senat_cr_commissions_html
+      commission_label: Commission des affaires économiques (Sénat)
+      commission_organe: PO78718
+      max_new_per_run: 8
+      body_max_chars: 10000
+
+    - id: senat_cr_amenagement
+      category: comptes_rendus
+      url: https://www.senat.fr/compte-rendu-commissions/amenagement-du-territoire-et-du-developpement-durable.html
+      format: senat_cr_commissions_html
+      commission_label: Commission de l'aménagement du territoire et du développement durable (Sénat)
+      commission_organe: PO78664
+      max_new_per_run: 8
+      body_max_chars: 10000
+
+    - id: senat_cr_affaires_sociales
+      category: comptes_rendus
+      url: https://www.senat.fr/compte-rendu-commissions/affaires-sociales.html
+      format: senat_cr_commissions_html
+      commission_label: Commission des affaires sociales (Sénat)
+      commission_organe: PO211493
+      max_new_per_run: 8
+      body_max_chars: 10000
+
 # ============================================================================
 # JOURNAL OFFICIEL — DILA OPENDATA
 # ============================================================================
