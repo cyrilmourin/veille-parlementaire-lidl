@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -147,13 +148,54 @@ def _setup_logging(verbose: bool = False):
     )
 
 
-def run(since_days: int = 1, send: bool = True, verbose: bool = False) -> int:
+# Filtre de rattrapage Lidl (demande Cyril 2026-04-24) : une fois par mois,
+# on pêche TOUS les items qui mentionnent littéralement « Lidl » dans leur
+# titre, résumé ou haystack, même s'ils n'ont matché aucun autre mot-clé.
+# Pas de test contextuel — la marque Lidl est sans ambiguïté. La fenêtre
+# (18 mois) est portée par le workflow (since_days=540) ; ici on se
+# contente d'ajouter le keyword quand le mot est présent.
+_LIDL_NEEDLE_RE = re.compile(r"(?<![a-z0-9])lidl(?![a-z0-9])")
+
+
+def _apply_lidl_catchup(items) -> int:
+    """Ajoute « Lidl » comme keyword pour tout item mentionnant littéralement
+    Lidl et qui n'a encore aucun match. Retourne le nombre d'items enrichis.
+
+    Opère in-place. Sans contexte — c'est le comportement voulu du
+    catch-up mensuel : on ratisse large sur le nom de la marque.
+    """
+    from unidecode import unidecode
+    enriched = 0
+    for it in items:
+        if getattr(it, "matched_keywords", None):
+            continue
+        raw = getattr(it, "raw", None) or {}
+        parts = [
+            getattr(it, "title", "") or "",
+            getattr(it, "summary", "") or "",
+        ]
+        if isinstance(raw, dict):
+            parts.append(raw.get("haystack_body") or "")
+            parts.append(raw.get("libelles_haystack") or "")
+        hay = unidecode(" ".join(parts)).lower()
+        if _LIDL_NEEDLE_RE.search(hay):
+            it.matched_keywords = ["Lidl"]
+            it.keyword_families = ["acteur"]
+            enriched += 1
+    return enriched
+
+
+def run(since_days: int = 1, send: bool = True, verbose: bool = False,
+        catchup_lidl: bool = False) -> int:
     """Pipeline complet. Renvoie le code de sortie (0 OK)."""
     _setup_logging(verbose)
     log.info("=== Veille parlementaire Lidl — %s ===", datetime.now().isoformat(timespec="seconds"))
 
-    # 1. Fetch toutes les sources
-    items, fetch_stats = normalize.run_all(CONFIG_SOURCES)
+    # 1. Fetch toutes les sources. En mode catch-up Lidl, on override
+    # since_days à la valeur passée (18 mois) pour que les parseurs AN
+    # (amendements, questions, agenda…) ne filtrent pas à 30-90j.
+    _since_override = since_days if catchup_lidl else None
+    items, fetch_stats = normalize.run_all(CONFIG_SOURCES, since_days_override=_since_override)
 
     # 1bis. R29 (2026-04-24) — santé pipeline : compare l'état J avec J-1
     # et émet des alertes ciblées (ERR_PERSIST, FORMAT_DRIFT, FEED_STALE).
@@ -178,10 +220,17 @@ def run(since_days: int = 1, send: bool = True, verbose: bool = False) -> int:
     # (commissions culture/sociales, missions d'info JOP, CE fédérations).
     # Voir `src/assemblee_organes.py`.
     bypassed_organe = _apply_organe_bypass(items)
+    # Catch-up Lidl (mensuel) : pose « Lidl » comme keyword sur tout item
+    # qui mentionne littéralement la marque, même sans match standard.
+    # Uniquement quand --catchup-lidl est passé (workflow mensuel dédié).
+    lidl_catchup = 0
+    if catchup_lidl:
+        lidl_catchup = _apply_lidl_catchup(items)
+        log.info("Catch-up Lidl : +%d items remontés sur le seul nom de la marque", lidl_catchup)
     matched = [it for it in items if it.matched_keywords]
     log.info(
-        "Matching : %d items matchés sur %d (dont %d via bypass source, %d via bypass organe)",
-        len(matched), len(items), bypassed_source, bypassed_organe,
+        "Matching : %d items matchés sur %d (dont %d via bypass source, %d via bypass organe, %d via catchup Lidl)",
+        len(matched), len(items), bypassed_source, bypassed_organe, lidl_catchup,
     )
 
     # 3. Persist
@@ -309,6 +358,10 @@ def main():
     p_run = sub.add_parser("run", help="Pipeline complet")
     p_run.add_argument("--since", type=int, default=1, help="Fenêtre du digest en jours (défaut 1)")
     p_run.add_argument("--no-email", action="store_true", help="Ne pas envoyer le mail")
+    p_run.add_argument("--catchup-lidl", action="store_true",
+                       help="Mode rattrapage mensuel : pose 'Lidl' comme keyword sur tout item "
+                            "mentionnant littéralement la marque, sans test contextuel. "
+                            "À combiner avec --since 540 et --no-email.")
     p_run.add_argument("-v", "--verbose", action="store_true")
 
     p_dry = sub.add_parser("dry", help="Fetch + match uniquement")
@@ -321,7 +374,12 @@ def main():
     args = ap.parse_args()
 
     if args.cmd == "run":
-        sys.exit(run(since_days=args.since, send=not args.no_email, verbose=args.verbose))
+        sys.exit(run(
+            since_days=args.since,
+            send=not args.no_email,
+            verbose=args.verbose,
+            catchup_lidl=args.catchup_lidl,
+        ))
     elif args.cmd == "dry":
         sys.exit(dry(verbose=args.verbose))
     elif args.cmd == "ping":

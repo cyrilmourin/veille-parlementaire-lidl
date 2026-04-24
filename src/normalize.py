@@ -138,9 +138,20 @@ def _fetch_one(group: str, src: dict) -> tuple[str, list[Item], str | None]:
         return src["id"], [], str(e)
 
 
-def run_all(config_path: str | Path, parallel: int = 6) -> tuple[list[Item], dict]:
-    """Charge la config, parallélise les fetchs, renvoie (items, stats)."""
+def run_all(config_path: str | Path, parallel: int = 6,
+            since_days_override: int | None = None) -> tuple[list[Item], dict]:
+    """Charge la config, parallélise les fetchs, renvoie (items, stats).
+
+    `since_days_override` : si fourni, remplace les `since_days` de toutes
+    les sources (utile pour le catch-up Lidl qui veut ratisser sur 18 mois).
+    """
     cfg = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    if since_days_override is not None:
+        for group in cfg.values():
+            if not isinstance(group, dict):
+                continue
+            for src in group.get("sources") or []:
+                src["since_days"] = since_days_override
     jobs = list(iter_sources(cfg))
     log.info("Pipeline : %d sources à interroger", len(jobs))
     all_items: list[Item] = []
