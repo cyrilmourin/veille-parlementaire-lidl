@@ -1,0 +1,139 @@
+{{ define "main" }}
+{{/*
+  Page dédiée Agenda parlementaire — R13-J (2026-04-21).
+
+  - Deux blocs : "À venir" (chronologique croissant) + "Passé récent"
+    (décroissant), car trier toute la liste en ByDate.Reverse sépare mal
+    les réunions futures des passées.
+  - Patch 5 (R13-J) : titre SUR LA MÊME LIGNE que le tag chambre,
+    bloc `.agenda-row`.
+  - Patch 7 (R13-J) : pour les items AN, le lien pointe vers
+    https://www2.assemblee-nationale.fr/agendas/les-agendas (les liens
+    unitaires /dyn/17/reunions/RUANR... sont cassés). Pour les autres
+    chambres (Sénat, Matignon, MinSports…), on utilise `source_url`
+    si présent, sinon pas de lien.
+*/}}
+{{ $today := now.Format "2006-01-02" }}
+{{ $upcoming := slice }}
+{{ $past := slice }}
+{{ range .Pages }}
+  {{ $d := .Date.Format "2006-01-02" }}
+  {{ if ge $d $today }}
+    {{ $upcoming = $upcoming | append . }}
+  {{ else }}
+    {{ $past = $past | append . }}
+  {{ end }}
+{{ end }}
+
+<section class="listing">
+  <nav class="breadcrumb"><a href="/">Accueil</a> &rsaquo; {{ .Title }}</nav>
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}<div class="intro">{{ . }}</div>{{ end }}
+
+  {{/* R23-H (2026-04-23) + R23-O (2026-04-23) : filtre UI par famille
+       de source. Toggle CSS sur l'attribut data-family-source posé sur
+       chaque <li>. Par défaut toutes les familles sont visibles ; un
+       bouton `aria-pressed="true"` signale l'état actif, seul l'item
+       correspondant reste visible.
+       R23-O : 5 familles stables validées par Cyril, retrait du bouton
+       JORF (page dédiée dans la nav), split Opérateurs / Mouvement. */}}
+  <nav class="source-family-filter" aria-label="Filtrer par famille de source">
+    <button type="button" class="sff-btn" data-sff="all" aria-pressed="true">Tout</button>
+    <button type="button" class="sff-btn" data-sff="parlement" aria-pressed="false">Parlement</button>
+    <button type="button" class="sff-btn" data-sff="gouvernement" aria-pressed="false">Gouvernement</button>
+    <button type="button" class="sff-btn" data-sff="operateurs_publics" aria-pressed="false">Opérateurs publics</button>
+    <button type="button" class="sff-btn" data-sff="autorites" aria-pressed="false">Autres autorités</button>
+    <button type="button" class="sff-btn" data-sff="mouvement_sportif" aria-pressed="false">Mouvement sportif</button>
+  </nav>
+
+  {{ if $upcoming }}
+  <h2 class="agenda-section">À venir <span class="section-count">({{ len $upcoming }})</span></h2>
+  <ul class="items agenda-upcoming">
+    {{ range sort $upcoming "Date" "asc" }}
+      <li{{ with .Params.family_source }} data-family-source="{{ . }}"{{ end }}>
+        <div class="agenda-row">
+          {{ with .Params.chamber }}{{ partial "chamber-badge.html" . }}{{ end }}
+          {{ if eq (.Params.chamber | default "") "AN" }}
+            <a class="title" href="https://www2.assemblee-nationale.fr/agendas/les-agendas" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+          {{ else if .Params.source_url }}
+            <a class="title" href="{{ .Params.source_url }}" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+          {{ else }}
+            <span class="title no-link">{{ .Title }}</span>
+          {{ end }}
+        </div>
+        <div class="item-meta">
+          <span class="meta-main">
+            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006 à 15h04" }}</time>{{ end }}
+          </span>
+          {{ with .Params.keywords }}
+            <span class="meta-tags">
+              {{ $fam := "" }}{{ with $.Params.families }}{{ $fam = index . 0 }}{{ end }}
+              {{ range first 8 . }}<span class="kw-tag"{{ with $fam }} data-family="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}
+            </span>
+          {{ end }}
+        </div>
+        {{ with .Params.snippet }}<div class="snippet-inline">« {{ . }} »</div>{{ end }}
+      </li>
+    {{ end }}
+  </ul>
+  {{ end }}
+
+  {{ if $past }}
+  <h2 class="agenda-section">Passé récent <span class="section-count">({{ len $past }})</span></h2>
+  <ul class="items agenda-past">
+    {{ range (sort $past "Date" "desc") }}
+      <li{{ with .Params.family_source }} data-family-source="{{ . }}"{{ end }}>
+        <div class="agenda-row">
+          {{ with .Params.chamber }}{{ partial "chamber-badge.html" . }}{{ end }}
+          {{ if eq (.Params.chamber | default "") "AN" }}
+            <a class="title" href="https://www2.assemblee-nationale.fr/agendas/les-agendas" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+          {{ else if .Params.source_url }}
+            <a class="title" href="{{ .Params.source_url }}" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+          {{ else }}
+            <span class="title no-link">{{ .Title }}</span>
+          {{ end }}
+        </div>
+        <div class="item-meta">
+          <span class="meta-main">
+            {{ if not .Date.IsZero }}<time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006 à 15h04" }}</time>{{ end }}
+          </span>
+          {{ with .Params.keywords }}
+            <span class="meta-tags">
+              {{ $fam := "" }}{{ with $.Params.families }}{{ $fam = index . 0 }}{{ end }}
+              {{ range first 8 . }}<span class="kw-tag"{{ with $fam }} data-family="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}
+            </span>
+          {{ end }}
+        </div>
+        {{ with .Params.snippet }}<div class="snippet-inline">« {{ . }} »</div>{{ end }}
+      </li>
+    {{ end }}
+  </ul>
+  {{ end }}
+
+  {{ if and (not $upcoming) (not $past) }}
+  <p class="empty-state">Aucune réunion programmée ni récente dans la veille.</p>
+  {{ end }}
+</section>
+
+{{/* R23-H : JS vanilla pour le filtre par famille de source. Pas de
+     dépendance externe. Accessible via aria-pressed + Arrow keys. */}}
+<script>
+(function() {
+  var btns = document.querySelectorAll('.source-family-filter .sff-btn');
+  if (!btns.length) return;
+  var items = document.querySelectorAll('section.listing ul.items > li');
+  function applyFilter(family) {
+    items.forEach(function(li) {
+      var f = li.getAttribute('data-family-source') || 'autres';
+      li.style.display = (family === 'all' || f === family) ? '' : 'none';
+    });
+    btns.forEach(function(b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-sff') === family ? 'true' : 'false');
+    });
+  }
+  btns.forEach(function(b) {
+    b.addEventListener('click', function() { applyFilter(b.getAttribute('data-sff')); });
+  });
+})();
+</script>
+{{ end }}

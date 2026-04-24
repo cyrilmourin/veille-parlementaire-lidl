@@ -1,0 +1,45 @@
+{{ define "main" }}
+<article class="item">
+  <nav class="breadcrumb">
+    <a href="/">Accueil</a> &rsaquo; <a href="/items/{{ .Params.category }}/">{{ .Params.category }}</a>
+  </nav>
+  <h1>{{ .Title }}</h1>
+  <p class="meta">
+    {{ with .Params.chamber }}<span class="chamber">{{ . }}</span>{{ end }}
+    {{ if not .Date.IsZero }}<time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "02/01/2006" }}</time>{{ end }}
+    {{ with .Params.source }}<span class="source">{{ . }}</span>{{ end }}
+  </p>
+
+  {{ if .Params.auteur }}
+    <p class="auteur-line">
+      {{/* R23-C (2026-04-23) : photo portrait plus grande (44x44) sur le
+           détail, masquée par onerror si 404. */}}
+      {{ with .Params.auteur_photo_url }}<img class="auteur-photo auteur-photo-lg" src="{{ . }}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none'" width="44" height="44">{{ end }}
+      Par
+      {{ if .Params.auteur_url }}
+        <a class="auteur-link" href="{{ .Params.auteur_url }}" rel="noopener" target="_blank">{{ .Params.auteur }}</a>
+      {{ else }}
+        <span class="auteur-name">{{ .Params.auteur }}</span>
+      {{ end }}
+      {{/* R23-B (2026-04-23) : tooltip libellé long du groupe si fourni. */}}
+      {{ with .Params.auteur_groupe }} <span class="auteur-groupe"{{ with $.Params.auteur_groupe_long }} title="{{ . }}"{{ end }}>({{ . }})</span>{{ end }}
+    </p>
+  {{ end }}
+
+  {{ with .Params.keywords }}
+    <div class="kw-list">
+      {{ range . }}<span class="kw-tag">{{ . }}</span>{{ end }}
+    </div>
+  {{ end }}
+
+  {{ with .Params.snippet }}
+    <blockquote class="snippet">« {{ . }} »</blockquote>
+  {{ end }}
+
+  <div class="content">{{ .Content }}</div>
+
+  {{ with .Params.source_url }}
+    <p><a class="btn" href="{{ . }}" rel="noopener" target="_blank">Consulter la source officielle &rarr;</a></p>
+  {{ end }}
+</article>
+{{ end }}

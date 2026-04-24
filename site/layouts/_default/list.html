@@ -1,0 +1,104 @@
+{{ define "main" }}
+{{/* R13-J (2026-04-21) — mapping de la valeur "sort" amendement vers un
+     slug normalisé (pas d'accents, kebab-case) pour ciblage CSS :
+     .sort-chip[data-sort="rejete"] → rouge, "adopte" → vert, etc. */}}
+{{ $monthsFR := slice "" "janvier" "février" "mars" "avril" "mai" "juin" "juillet" "août" "septembre" "octobre" "novembre" "décembre" }}
+<section class="listing">
+  <nav class="breadcrumb"><a href="/">Accueil</a> &rsaquo; {{ .Title }}</nav>
+  <h1>{{ .Title }}</h1>
+  {{ with .Content }}<div class="intro">{{ . }}</div>{{ end }}
+  {{/* R23-H (2026-04-23) + R23-O (2026-04-23) : filtre UI par famille
+       de source, affiché uniquement sur /items/communiques/ (les autres
+       listings ont des sources moins diverses — amendements = AN+Senat,
+       questions idem, dossiers_legislatifs idem ; pas de valeur ajoutée).
+       R23-O : 5 familles stables, retrait bouton JORF (page dédiée dans
+       la nav), split Opérateurs publics / Mouvement sportif. */}}
+  {{ if eq .Type "communiques" }}
+  <nav class="source-family-filter" aria-label="Filtrer par famille de source">
+    <button type="button" class="sff-btn" data-sff="all" aria-pressed="true">Tout</button>
+    <button type="button" class="sff-btn" data-sff="parlement" aria-pressed="false">Parlement</button>
+    <button type="button" class="sff-btn" data-sff="gouvernement" aria-pressed="false">Gouvernement</button>
+    <button type="button" class="sff-btn" data-sff="operateurs_publics" aria-pressed="false">Opérateurs publics</button>
+    <button type="button" class="sff-btn" data-sff="autorites" aria-pressed="false">Autres autorités</button>
+    <button type="button" class="sff-btn" data-sff="mouvement_sportif" aria-pressed="false">Mouvement sportif</button>
+  </nav>
+  {{ end }}
+  <ul class="items">
+    {{ range (.Paginate .Pages.ByDate.Reverse).Pages }}
+      {{/* R23-C4 (2026-04-23) : le <li> devient flex horizontal avec, si
+           .Params.auteur_photo_url est défini, une colonne gauche dédiée
+           à la photo portrait au même format visuel que les logos chambre
+           des dossiers législatifs (56x56, border-radius 8px). Si pas de
+           photo, le body prend toute la largeur (pas de colonne vide).
+           Si la photo 404 à l'exécution, onerror masque le bloc
+           .listing-item__photo entier (pas juste l'img) pour que le body
+           reprenne tout l'espace disponible. */}}
+      <li class="listing-item"{{ with .Params.family_source }} data-family-source="{{ . }}"{{ end }}>
+        {{ with .Params.auteur_photo_url }}
+          <div class="listing-item__photo" aria-hidden="true">
+            <img class="auteur-photo" src="{{ . }}" alt="" loading="lazy" decoding="async" onerror="this.parentElement.style.display='none'" width="56" height="56">
+          </div>
+        {{ end }}
+        <div class="listing-item__body">
+          {{/* R13-J : auteur (lien fiche député/sénateur) inline AVANT le titre,
+               même taille de police. Fixup patch 9. Ouverture nouvel onglet.
+               R13-L : barre verticale séparateur entre auteur et titre
+               (demande Cyril). Visible uniquement si auteur présent. */}}
+          {{/* R23-B (2026-04-23) : sigle groupe parlementaire en inline après
+               l'auteur, tooltip `title=""` avec le libellé long quand fourni. */}}
+          {{ if .Params.auteur_url }}<a class="auteur-inline" href="{{ .Params.auteur_url }}" target="_blank" rel="noopener noreferrer" title="Fiche {{ .Params.auteur }}">{{ .Params.auteur }}</a>{{ with .Params.auteur_groupe }} <span class="auteur-groupe"{{ with $.Params.auteur_groupe_long }} title="{{ . }}"{{ end }}>({{ . }})</span>{{ end }}<span class="auteur-sep"> | </span>{{ else if .Params.auteur }}<span class="auteur-inline">{{ .Params.auteur }}</span>{{ with .Params.auteur_groupe }} <span class="auteur-groupe"{{ with $.Params.auteur_groupe_long }} title="{{ . }}"{{ end }}>({{ . }})</span>{{ end }}<span class="auteur-sep"> | </span>{{ end }}
+          {{ if .Params.source_url }}
+          <a href="{{ .Params.source_url }}" class="title" target="_blank" rel="noopener noreferrer">{{ .Title }}</a>
+          {{ else }}
+          <span class="title no-link">{{ .Title }}</span>
+          {{ end }}
+          <div class="item-meta">
+            <span class="meta-main">
+              {{ with .Params.chamber }}{{ partial "chamber-badge.html" . }}{{ end }}
+              {{ with .Params.status_label }} · <span class="status{{ if $.Params.is_promulgated }} status-promulgated{{ end }}{{ if eq . "Retiré" }} status-retire{{ end }}">{{ . }}</span>{{ end }}
+              {{ if not .Date.IsZero }} · <time class="date" datetime="{{ .Date.Format "2006-01-02" }}">{{ printf "%d %s %d" .Date.Day (index $monthsFR (int .Date.Month)) .Date.Year }}</time>{{ end }}
+              {{/* R13-J : chip sort/état juste APRÈS la date pour les amendements.
+                   R13-O (2026-04-21) : fix data-sort qui restait vide. Le `with`
+                   changeait le contexte `.` vers la valeur de sort_label, donc
+                   `$.Params.sort_slug` fonctionnait mais apparemment Hugo le
+                   vidait à l'output. Utilisation de `if` + accès direct. */}}
+              {{ if .Params.sort_label }} · <span class="sort-chip" data-sort="{{ .Params.sort_slug | default "" }}">{{ .Params.sort_label }}</span>{{ end }}
+            </span>
+            {{ with .Params.keywords }}
+              <span class="meta-tags">
+                {{ $fam := "" }}{{ with $.Params.families }}{{ $fam = index . 0 }}{{ end }}
+                {{ range first 12 . }}<span class="kw-tag"{{ with $fam }} data-family="{{ . }}"{{ end }}>{{ . }}</span>{{ end }}
+              </span>
+            {{ end }}
+          </div>
+          {{ with .Params.snippet }}<div class="snippet-inline">« {{ . }} »</div>{{ end }}
+        </div>
+      </li>
+    {{ end }}
+  </ul>
+  {{ partial "pagination-inline.html" . }}
+</section>
+
+{{/* R23-H : JS vanilla pour le filtre par famille de source sur
+     /items/communiques/. Le `<script>` est inclus sur toutes les
+     pages _default mais no-op en l'absence de `.source-family-filter`. */}}
+<script>
+(function() {
+  var btns = document.querySelectorAll('.source-family-filter .sff-btn');
+  if (!btns.length) return;
+  var items = document.querySelectorAll('section.listing ul.items > li');
+  function applyFilter(family) {
+    items.forEach(function(li) {
+      var f = li.getAttribute('data-family-source') || 'autres';
+      li.style.display = (family === 'all' || f === family) ? '' : 'none';
+    });
+    btns.forEach(function(b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-sff') === family ? 'true' : 'false');
+    });
+  }
+  btns.forEach(function(b) {
+    b.addEventListener('click', function() { applyFilter(b.getAttribute('data-sff')); });
+  });
+})();
+</script>
+{{ end }}

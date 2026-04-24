@@ -1,0 +1,72 @@
+{{/*
+  Sidebar droite, utilisée par baseof.html sur toutes les pages non
+  full-width. Contient trois blocs empilés :
+    0. Méta (R13-G) — date de dernière mise à jour + version système,
+       alimenté par site/data/meta.json (généré dans src/site_export.py).
+    1. Recherche — input qui redirige vers /recherche/?q={terme}. Sur la
+       page /recherche/ elle-même, le JS dédié intercepte pour rendre
+       les résultats inline.
+    2. Agenda — 8 prochains rendez-vous institutionnels, alimenté par
+       site/data/sidebar_agenda.json.
+*/}}
+{{/* R13-J (2026-04-21) : le bloc méta a été déplacé dans header.html. */}}
+
+{{/*
+  R17 (2026-04-22) : module image-only "Sideline Conseil" — juste la bannière
+  cliquable vers sideline-conseil.fr. Hérite de .side-card (bordure + radius
+  identiques au module Recherche) + modifier .side-card--brand qui :
+    - supprime le padding pour que l'image touche les bords
+    - ajoute overflow:hidden pour que l'image soit clippée par le border-radius
+*/}}
+<a class="side-card side-card--brand" href="https://sideline-conseil.fr" target="_blank" rel="noopener" aria-label="Site Sideline Conseil (nouvel onglet)">
+  <img src="/sideline-banner.png" alt="Sideline Conseil" loading="lazy"/>
+</a>
+
+<div class="side-card side-card--search">
+  <h3 class="side-title">Recherche</h3>
+  <p class="side-caption">Tous les contenus de la veille (30 jours)</p>
+  <form class="side-search" action="/recherche/" method="get" role="search">
+    <label class="visually-hidden" for="side-q">Rechercher</label>
+    <input type="search" id="side-q" name="q" placeholder="ex. JO 2030, ANS, amendement&hellip;" autocomplete="off"/>
+    <button type="submit" aria-label="Lancer la recherche">&rsaquo;</button>
+  </form>
+</div>
+
+<div class="side-card side-card--agenda">
+  <h3 class="side-title">Agenda</h3>
+  <p class="side-caption">Prochains rendez-vous institutionnels</p>
+  {{/*
+    UX-A (2026-04-21) : la sidebar agenda redirige vers /items/agenda/ pour
+    que l'utilisateur puisse parcourir l'agenda complet, plutôt que d'envoyer
+    chaque clic sur la page externe de l'événement (souvent une page pivot
+    sans valeur informative supplémentaire). Les titres sont aussi tronqués
+    à 60 caractères pour ne pas casser la grille latérale (la page /agenda/
+    affiche les titres complets).
+  */}}
+  {{ with site.Data.sidebar_agenda }}
+    <ul class="side-list">
+      {{ range . }}
+        <li class="side-item" data-chamber="{{ .chamber }}">
+          <div class="side-date">
+            {{ if .published_at }}
+              <time datetime="{{ substr .published_at 0 10 }}">
+                {{ dateFormat "02/01" (time.AsTime (substr .published_at 0 10)) }}
+              </time>
+            {{ end }}
+          </div>
+          <div class="side-body">
+            {{/* R13-L (2026-04-21) : chambre + titre INLINE sur la même
+                 ligne (demande Cyril, pas de retour chariot entre les deux).
+                 Titre limité à 3 lignes via CSS (line-clamp). */}}
+            {{ with .chamber }}<span class="chamber side-chamber" data-chamber="{{ . }}">{{ . }}</span>{{ end }} <a href="/items/agenda/" class="side-title-link" title="{{ .title }}">{{ .title }}</a>
+          </div>
+        </li>
+      {{ end }}
+    </ul>
+    <p class="side-more">
+      <a href="/items/agenda/">Voir tout l'agenda &rarr;</a>
+    </p>
+  {{ else }}
+    <p class="side-empty">Pas de rendez-vous institutionnel à venir.</p>
+  {{ end }}
+</div>

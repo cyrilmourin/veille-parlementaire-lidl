@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ .Title }} — {{ .Site.Title }}</title>
+  <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}"/>
+  <meta name="robots" content="index,follow"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"/>
+  <link rel="shortcut icon" href="/favicon.ico"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap"/>
+  <link rel="stylesheet" href="/style.css"/>
+  {{ with .OutputFormats.Get "rss" -}}
+    <link rel="alternate" type="application/rss+xml" title="{{ $.Site.Title }}" href="{{ .Permalink }}"/>
+  {{- end }}
+</head>
+<body>
+  {{ partial "header.html" . }}
+  {{/*
+    Grille 2 colonnes : contenu central + sidebar (recherche + agenda).
+    Les pages qui veulent forcer le pleine-largeur peuvent définir
+    `params.fullwidth = true` dans leur front-matter.
+  */}}
+  {{ $full := or .Params.fullwidth (eq .Kind "404") }}
+  <main class="container layout{{ if not $full }} layout--split{{ end }}">
+    <div class="layout-main">
+      {{ block "main" . }}{{ end }}
+    </div>
+    {{ if not $full }}
+      <aside class="layout-side" aria-label="Modules latéraux">
+        {{ partial "sidebar.html" . }}
+      </aside>
+    {{ end }}
+  </main>
+  {{ partial "footer.html" . }}
+</body>
+</html>

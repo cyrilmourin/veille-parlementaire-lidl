@@ -1,0 +1,453 @@
+# Dictionnaire de mots-clés — veille parlementaire Lidl (Sideline Conseil)
+# Matching insensible à la casse et aux accents (voir src/keywords.py).
+# Chaque terme peut contenir des espaces et des chiffres. Les variantes
+# orthographiques sont listées explicitement (pas de stemming).
+#
+# Familles : acteur | groupe | dirigeant | theme | dispositif | evenement
+#
+# Chaque entrée peut prendre trois formes :
+#
+#   1. string simple  → mode direct (rétro-compat avec le projet sport)
+#   2. { term: "X", mode: "direct" }
+#   3. { term: "X", mode: "contextual", requires_any: [ ... ] }
+#
+# En mode "contextual", l'item n'est retenu que si le texte contient AUSSI
+# au moins un des termes listés dans requires_any. Si requires_any est
+# omis, la condition par défaut est : la présence d'au moins un autre
+# terme direct du lexique dans le même texte.
+#
+# Exemple — Carrefour n'est retenu que s'il apparaît avec "groupe",
+# "enseigne", "hypermarché", "Bompard", "SRP+10", etc.
+
+# ============================================================================
+# ACTEUR — enseignes alimentaires
+# ============================================================================
+acteur:
+  # --- Direct (nom sans ambiguïté) -----------------------------------------
+  - Lidl
+  - Aldi
+  - Aldi Marché
+  - Aldi France
+  - Auchan
+  - Auchan Hypermarché
+  - Auchan Supermarché
+  - Auchan Piéton
+  - Auchan Drive
+  - Intermarché
+  - Intermarché Hyper
+  - Intermarché Super
+  - Intermarché Express
+  - Intermarché Contact
+  - Monoprix
+  - Monop'
+  - Franprix
+  - Picard
+  - Picard Surgelés
+  - Grand Frais
+  - Biocoop
+  - Bio c'Bon
+  - Bio c'bon
+  - Naturalia
+  - Système U
+  - Super U
+  - Hyper U
+  - U Express
+  - Costco France
+
+  # --- Contextuel (nom ambigu — nom commun / patronyme / lieu) -------------
+  - term: Carrefour
+    mode: contextual
+    requires_any:
+      - groupe Carrefour
+      - enseigne Carrefour
+      - hypermarché Carrefour
+      - Carrefour Market
+      - Carrefour City
+      - Carrefour Contact
+      - Carrefour Express
+      - Carrefour Drive
+      - Promocash
+      - Bompard
+      - Alexandre Bompard
+      - grande distribution
+      - commerce de détail alimentaire
+      - EGalim
+      - SRP+10
+      - centrale d'achat
+      - MDD
+
+  - term: Casino
+    mode: contextual
+    requires_any:
+      - groupe Casino
+      - enseigne Casino
+      - Casino Guichard
+      - Petit Casino
+      - Casino Shop
+      - Géant Casino
+      - Rallye Casino
+      - Naouri
+      - Jean-Charles Naouri
+      - grande distribution
+
+  - term: Leclerc
+    mode: contextual
+    requires_any:
+      - E.Leclerc
+      - E Leclerc
+      - centres Leclerc
+      - Galec
+      - ACDLec
+      - Michel-Edouard Leclerc
+      - Michel Edouard Leclerc
+      - MEL
+      - Leclerc Drive
+      - coopérative Leclerc
+      - grande distribution
+
+  - term: Cora
+    mode: contextual
+    requires_any:
+      - enseigne Cora
+      - hypermarché Cora
+      - groupe Cora
+      - Louis Delhaize
+      - grande distribution
+
+  - term: Ed
+    mode: contextual
+    requires_any:
+      - Ed discount
+      - Ed hard-discount
+      - hard-discount
+      - discount alimentaire
+
+  - term: Netto
+    mode: contextual
+    requires_any:
+      - Netto Intermarché
+      - Netto Mousquetaires
+      - hard-discount
+      - discount alimentaire
+      - ITM
+      - Intermarché
+
+# ============================================================================
+# GROUPE — centrales d'achat, holdings, coopératives
+# ============================================================================
+groupe:
+  - Mousquetaires
+  - ITM
+  - ITM Entreprises
+  - Galec
+  - ACDLec
+  - Eurelec
+  - Epic Partners
+  - Agecore
+  - SCAPharmonie
+  - Schiever
+  - Louis Delhaize
+
+# ============================================================================
+# DIRIGEANT — personnalités fréquemment auditionnées
+# ============================================================================
+dirigeant:
+  - Michel-Edouard Leclerc
+  - Michel Edouard Leclerc
+  - Alexandre Bompard
+  - Thierry Cotillard
+  - Dominique Schelcher
+  - Michel Biero
+  - Kenneth McGrath
+
+# ============================================================================
+# THEME — négociations commerciales, prix, marges
+# ============================================================================
+theme_negociations:
+  # --- Direct ---------------------------------------------------------------
+  - EGalim
+  - Egalim
+  - E-Galim
+  - Loi EGalim 1
+  - Loi EGalim 2
+  - Loi EGalim 3
+  - Loi Descrozaille
+  - SRP+10
+  - SRP +10
+  - Seuil de revente à perte
+  - Encadrement des promotions
+  - Négociations commerciales
+  - Négociation commerciale
+  - Negociations commerciales
+  - Box de négociation
+  - Médiateur des relations commerciales agricoles
+  - Mediateur des relations commerciales agricoles
+  - Observatoire de la formation des prix et des marges
+  - OFPM
+  - Trimestre anti-inflation
+  - Panier anti-inflation
+  - Shrinkflation
+  - Réduflation
+  - Reduflation
+
+  # --- Contextuel -----------------------------------------------------------
+  - term: Centrales d'achat
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - distributeur
+      - EGalim
+      - Eurelec
+      - Agecore
+      - Epic Partners
+
+  - term: Centrale d'achat
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - distributeur
+      - EGalim
+
+  - term: Centrale européenne
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - Eurelec
+      - Agecore
+      - Epic Partners
+
+  - term: Marges arrière
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - distributeur
+      - EGalim
+
+  - term: MDD
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - distributeur
+      - marque de distributeur
+
+  - term: Marque de distributeur
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - distributeur
+
+  - term: Chèque alimentaire
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - commerce de détail
+      - commerce alimentaire
+
+  - term: Chèque alimentation durable
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - commerce de détail
+      - commerce alimentaire
+
+  - term: Contrats amont
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - négociation commerciale
+      - EGalim
+
+  - term: Matière première agricole
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - négociation commerciale
+      - EGalim
+
+  - term: Agriculture
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - négociation commerciale
+      - EGalim
+
+  - term: Agriculteurs
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - négociation commerciale
+      - EGalim
+
+# ============================================================================
+# THEME — urbanisme commercial, implantation
+# ============================================================================
+theme_urbanisme:
+  - CDAC
+  - Commission départementale d'aménagement commercial
+  - CNAC
+  - Commission nationale d'aménagement commercial
+  - Autorisation d'exploitation commerciale
+  - Urbanisme commercial
+  - Moratoire entrepôts
+  - Moratoire entrepôt
+  - Dark store
+  - Dark stores
+  - Quick commerce
+  - Drive piéton
+  - ZAN
+  - Zéro artificialisation nette
+  - Zero artificialisation nette
+  - Friches commerciales
+  - Friche commerciale
+  - Loi ELAN
+
+# ============================================================================
+# THEME — travail et temps d'ouverture
+# ============================================================================
+theme_travail:
+  # --- Direct ---------------------------------------------------------------
+  - Travail dominical
+  - Ouverture dominicale
+  - Dimanches du maire
+  - ZTI
+  - Zone touristique internationale
+  - Zone commerciale
+  - Zones commerciales
+  - Travail de nuit grande distribution
+  - Convention collective commerce de détail alimentaire
+
+  # --- Contextuel -----------------------------------------------------------
+  - term: Code du travail
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - commerce de détail
+      - travail dominical
+      - ouverture dominicale
+      - ZTI
+
+# ============================================================================
+# THEME — produits, étiquetage, environnement (tous direct)
+# ============================================================================
+theme_produits:
+  - Nutri-score
+  - Nutriscore
+  - Planet-score
+  - Planetscore
+  - Eco-score
+  - Ecoscore
+  - Affichage environnemental
+  - Loi AGEC
+  - REP emballages
+  - Responsabilité élargie du producteur emballages
+  - Consigne des emballages
+  - Consigne emballage
+  - Vrac
+  - Distribution vrac
+  - Rayon vrac
+  - Plastique à usage unique
+  - Origine France
+  - Etiquetage origine
+  - Étiquetage origine
+  - Gaspillage alimentaire
+  - Loi Garot
+  - Dons alimentaires
+  - Rappel produit
+  - RappelConso
+  - DGCCRF
+  - DGAL
+  - Sécurité alimentaire
+
+# ============================================================================
+# THEME — concurrence, franchise, carburant
+# ============================================================================
+theme_concurrence:
+  # --- Direct ---------------------------------------------------------------
+  - Autorité de la concurrence
+  - Carburant à prix coûtant
+  - Prix coûtant
+
+  # --- Contextuel -----------------------------------------------------------
+  - term: Franchise
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - commerce
+      - enseigne
+      - distributeur
+      - contrat de franchise
+
+  - term: Contrat de franchise
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - commerce
+      - enseigne
+      - distributeur
+
+  - term: Concurrence déloyale
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - commerce
+      - enseigne
+      - distributeur
+
+# ============================================================================
+# THEME — outre-mer (volet grande distribution uniquement)
+# ============================================================================
+theme_outremer:
+  # --- Direct ---------------------------------------------------------------
+  - Bouclier qualité prix
+  - BQP
+  - BQP+
+
+  # --- Contextuel -----------------------------------------------------------
+  - term: Oligopole outre-mer
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - prix alimentaire
+
+  - term: Vie chère outre-mer
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - prix alimentaire
+
+  - term: Outre-mer
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - BQP
+      - bouclier qualité prix
+      - prix alimentaire
+
+  - term: DOM
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - BQP
+      - bouclier qualité prix
+      - prix alimentaire
+
+  - term: Ultramarin
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - enseigne
+      - BQP
+      - bouclier qualité prix
+      - prix alimentaire

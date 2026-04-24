@@ -1,0 +1,175 @@
+name: Veille parlementaire Lidl — daily
+
+on:
+  schedule:
+    # Un seul cron quotidien : 06:00 UTC.
+    # → 08:00 Europe/Paris en heure d'été, 07:00 en heure d'hiver.
+    # Demande Cyril : 1 email / jour à 08h Paris l'été (contrainte
+    # GitHub Actions qui ne connaît pas les DST). Accepté que le
+    # mail arrive 1h plus tôt en hiver.
+    - cron: "0 6 * * *"
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'data/**'
+      - '**.md'
+      - 'docs/**'
+      - 'README*'
+  workflow_dispatch:
+    inputs:
+      since_days:
+        description: "Fenêtre digest (jours)"
+        required: false
+        default: "1"
+      no_email:
+        description: "Ne pas envoyer l'email (0/1)"
+        required: false
+        default: "0"
+      reset_db:
+        description: "Reset SQLite avant run (0/1)"
+        required: false
+        default: "0"
+      reset_category:
+        description: "Purge ciblée d'une catégorie (vide si pas de purge)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  actions: write
+
+concurrency:
+  group: veille-lidl-daily
+  cancel-in-progress: false
+
+jobs:
+  collect-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      # DB persistée via cache (pas via git — >100 Mo potentiel).
+      - name: Restore SQLite cache
+        if: github.event.inputs.reset_db != '1'
+        uses: actions/cache@v4
+        with:
+          path: data/veille.sqlite3
+          key: veille-lidl-sqlite-v1-${{ github.run_id }}
+          restore-keys: |
+            veille-lidl-sqlite-v1-
+
+      - name: Reset SQLite (si demandé)
+        if: github.event.inputs.reset_db == '1'
+        run: |
+          echo "reset_db=1 → purge de data/veille.sqlite3"
+          rm -f data/veille.sqlite3
+
+      - name: Reset catégorie ciblée (si demandé)
+        if: github.event.inputs.reset_category != '' && github.event.inputs.reset_db != '1'
+        run: |
+          echo "reset_category=${{ github.event.inputs.reset_category }} → purge ciblée avant ingest"
+          python scripts/reset_category.py "${{ github.event.inputs.reset_category }}" --yes
+
+      # Refresh du cache AMO (acteurs + organes AN) — idempotent.
+      - name: Refresh AMO cache (weekly)
+        continue-on-error: true
+        run: |
+          python -m scripts.refresh_amo_cache --max-age-days 7
+
+      - name: Run pipeline (fetch + match + email + export)
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          DIGEST_TO: ${{ secrets.DIGEST_TO }}
+          SITE_URL: "https://veille-lidl.sideline-conseil.fr"
+        run: |
+          SINCE="${{ github.event.inputs.since_days || '1' }}"
+          NOEMAIL=""
+          if [ "${{ github.event.inputs.no_email }}" = "1" ]; then NOEMAIL="--no-email"; fi
+          python -m src.main run --since "$SINCE" $NOEMAIL -v
+
+      - name: Upload last digest as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ github.run_id }}
+          path: data/last_digest.html
+          if-no-files-found: ignore
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.128.0"
+          extended: true
+
+      - name: Build Hugo site
+        working-directory: site
+        run: |
+          rm -rf public
+          hugo --minify --baseURL "https://veille-lidl.sideline-conseil.fr/"
+
+      # Idempotence re-run : purge artefacts stales "github-pages" du run
+      # courant avant upload (cf. deploy-pages@v4 issue #290).
+      - name: Purge stale github-pages artifacts from this run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: { artifacts } } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+              per_page: 100,
+            });
+            const stale = artifacts.filter(a => a.name === 'github-pages');
+            if (stale.length === 0) {
+              console.log('No stale github-pages artifact to purge.');
+              return;
+            }
+            console.log(`Found ${stale.length} stale github-pages artifact(s), deleting...`);
+            for (const a of stale) {
+              console.log(`  - deleting artifact id=${a.id} size=${a.size_in_bytes}`);
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: a.id,
+              });
+            }
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Commit du dernier digest HTML + caches AMO / texte→dossier si
+      # régénérés. La DB SQLite reste persistée via actions/cache.
+      - name: Commit last digest + caches
+        if: always()
+        run: |
+          git config user.name "veille-bot"
+          git config user.email "veille-bot@sideline-conseil.fr"
+          git add data/last_digest.html data/amo_resolved.json data/an_texte_to_dossier.json data/pipeline_health.json 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "chore: snapshot digest $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push || true

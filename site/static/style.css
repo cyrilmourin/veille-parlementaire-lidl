@@ -1,0 +1,1687 @@
+/* ----------------------------------------------------------------------------
+   Veille parlementaire Lidl — palette Lidl
+   Bleu   #0050AA  (dominante, fonds, titres)
+   Jaune  #FFE500  (pastilles enseignes, accents)
+   Rouge  #E60A14  (liens, CTA)
+   Fond   #F4F6F8  (arrière-plans, cartes)
+   Alias --sl-* gardés pour compat avec les sélecteurs hérités du projet
+   sport (aucun impact visuel : --sl-blue pointe désormais sur Lidl blue).
+   ---------------------------------------------------------------------------- */
+:root {
+  --lidl-blue:   #0050AA;
+  --lidl-yellow: #FFE500;
+  --lidl-red:    #E60A14;
+  --lidl-bg:     #F4F6F8;
+
+  --sl-blue:  var(--lidl-blue);
+  --sl-red:   var(--lidl-red);
+  --sl-cream: var(--lidl-bg);
+  --sl-green: #66A266;
+
+  --accent:   var(--lidl-blue);
+  --accent-2: var(--lidl-red);
+  --accent-3: var(--lidl-yellow);
+  --bg:       var(--lidl-bg);
+  --card:     #ffffff;
+  --fg:       #1b2235;
+  --muted:    #5c6577;
+  --line:     #dfe4ea;
+  --radius:   10px;
+  --font:     "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-title: "Montserrat", "Inter", "Segoe UI", Arial, sans-serif;
+}
+
+/* ----------------------------------------------------------------------------
+   Typographie de titres — Montserrat, cohérente sur tout le site.
+   H1/H2 : très gras (900) et legèrement condensée (letter-spacing négatif)
+   pour le rendu "print-headline" demandé.
+   H3/H4 : même famille, weights standard (laissés au défaut du contexte).
+   ---------------------------------------------------------------------------- */
+h1, h2, h3, h4 {
+  font-family: var(--font-title);
+}
+h1 {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
+}
+h2 {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--sl-red); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+/* ---------- Layout principal : central + sidebar ---------------------------
+   Structure :
+     <main class="container layout layout--split">
+       <div class="layout-main"> … </div>
+       <aside class="layout-side"> … </aside>
+     </main>
+   La grille bascule en 1 colonne sous 960px. Le contenu principal garde
+   min-width:0 pour ne pas déborder des listes longues.
+---------------------------------------------------------------------------- */
+.layout {
+  display: block;
+}
+.layout--split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 28px;
+  align-items: start;
+}
+.layout-main {
+  min-width: 0;
+}
+.layout-side {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+@media (max-width: 960px) {
+  .layout--split {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .layout-side {
+    position: static;
+    order: 2;
+  }
+}
+
+/* ---------- Header -------------------------------------------------------- */
+.site-header {
+  background: var(--sl-blue);
+  color: var(--sl-cream);
+  border-bottom: 4px solid var(--sl-red);
+}
+.site-header .container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  padding-top: 22px;
+  padding-bottom: 18px;
+}
+/* Nouvelle structure co-brandée : une ligne unique pour brand Sideline +
+   logo client Lidl + hamburger, puis la nav sous-jacente. */
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+/* Logo client (Lidl) à droite du header. Fond blanc pour que les couleurs
+   Lidl (jaune sur rouge sur bleu) ressortent du header bleu Lidl. */
+.client-logo {
+  margin-left: auto;
+  max-height: 72px;
+  width: auto;
+  flex: 0 0 auto;
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  object-fit: contain;
+  display: block;
+}
+.brand {
+  color: var(--sl-cream);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.brand:hover { text-decoration: none; }
+.brand-logo {
+  /* R13-J (2026-04-21) : 54 → 90px pour plus de présence visuelle. */
+  width: 90px;
+  height: 90px;
+  flex: 0 0 90px;
+  object-fit: contain;
+  display: block;
+}
+.brand-text { display: flex; flex-direction: column; }
+.brand-kicker {
+  font-size: 11px; letter-spacing: 3px; opacity: .85; font-weight: 600;
+  font-family: var(--font-title);
+}
+.brand-title {
+  font-size: 22px; font-weight: 800; margin-top: 3px;
+  font-family: var(--font-title);
+}
+.brand-tagline {
+  font-size: 13px; font-style: italic; color: var(--sl-red);
+  margin-top: 2px; font-weight: 500;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  width: 100%;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  padding-top: 10px;
+}
+.nav a {
+  color: var(--sl-cream);
+  opacity: .9;
+  font-size: 13px;
+  font-weight: 500;
+  /* R13-J (2026-04-21) : padding homogène pour que le hover rouge
+     (qui imite Rechercher) ait une surface cliquable cohérente.
+     R15 (2026-04-22) : padding H réduit 10→5px pour que les 9 entrées
+     + méta tiennent sur une ligne en viewport desktop standard. */
+  padding: 4px 5px;
+  border-radius: 4px;
+}
+/* R13-J : hover rouge (type Rechercher) sur tous les items nav sauf
+   .nav-search lui-même (qui a son propre hover inverse). */
+.nav a:not(.nav-search):hover {
+  opacity: 1;
+  color: #fff;
+  text-decoration: none;
+  background: var(--sl-red);
+  border-bottom: 0;
+}
+
+/* R13-J : méta version/date dans le header, poussée à droite du menu nav. */
+.nav .nav-meta {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  font-style: italic;
+  color: rgba(238,232,209,0.75);
+  text-align: right;
+  line-height: 1.3;
+  padding: 2px 4px;
+}
+.nav .nav-meta-line { margin: 0; padding: 0; }
+
+/* ---------- Hamburger mobile (R21) ---------------------------------------- */
+/* Bouton hamburger — masqué sur desktop */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 32px;
+  height: 22px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.nav-toggle-bar {
+  display: block;
+  width: 100%;
+  height: 3px;
+  background: var(--sl-cream);
+  border-radius: 2px;
+  transition: opacity 0.2s;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) {
+  transform: translateY(9.5px) rotate(45deg);
+  transition: transform 0.2s;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) {
+  transform: translateY(-9.5px) rotate(-45deg);
+  transition: transform 0.2s;
+}
+
+@media (max-width: 640px) {
+  /* Logo centré au-dessus du titre */
+  .brand {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+  .brand-logo {
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+  }
+  .brand-text {
+    align-items: center;
+  }
+
+  /* Affiche le bouton hamburger */
+  .site-header .container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .brand-row {
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .brand {
+    flex: 1 1 auto;
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+  }
+  .brand-text { align-items: flex-start; }
+  .client-logo {
+    max-height: 40px;
+    padding: 4px 8px;
+    margin-left: auto;
+  }
+  .nav-toggle { display: flex; }
+
+  /* Nav masquée par défaut sur mobile */
+  .nav {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    background: rgba(0,0,0,0.15);
+    border-radius: 6px;
+    padding: 10px 12px;
+    gap: 4px;
+  }
+  .nav.nav--open {
+    display: flex;
+  }
+  .nav a {
+    font-size: 15px;
+    padding: 6px 8px;
+    width: 100%;
+  }
+  .nav .nav-meta {
+    margin-left: 0;
+    text-align: left;
+    padding: 6px 8px 2px;
+  }
+}
+
+/* ---------- Home ---------------------------------------------------------- */
+/* H3 d'accueil (sous-titre de positionnement) */
+.home .page-intro {
+  margin: 8px 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  color: var(--sl-blue);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.home .content h2 {
+  color: var(--sl-blue);
+  border-left: 4px solid var(--sl-red);
+  padding: 2px 0 2px 12px;
+  margin-top: 40px;
+  margin-bottom: 14px;
+  /* font-size / font-weight / letter-spacing : hérités de la règle h2 globale
+     (28/22 px Montserrat 900, letter-spacing -0.4) */
+}
+.home .content h3 {
+  font-size: 17px;
+  color: var(--sl-blue);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+  margin-top: 28px;
+}
+.home .content h3 a { color: inherit; }
+.home .content h3 a:hover { color: var(--sl-red); text-decoration: none; }
+
+/* Liste d'items (markdown -> ul générique) */
+.home .content ul {
+  list-style: none; padding: 0; margin: 8px 0;
+}
+.home .content ul li {
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+.home .content ul li:last-child { border-bottom: none; }
+.home .content ul li a { font-family: var(--font-title); color: var(--sl-blue); font-weight: 600; }
+.home .content ul li a:hover { color: var(--sl-red); text-decoration: none; }
+.home .content ul li small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+  font-style: italic;
+  line-height: 1.45;
+}
+.home .content p em { color: var(--muted); }
+
+/* ---------- Badge chambre (AN / Sénat) : inline, coloré -------------- */
+/* Base : gris neutre pour valeurs inconnues (Elysee, Matignon, ministères). */
+.chamber {
+  display: inline-block;
+  background: var(--muted);
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+/* AN (Assemblée nationale) : bleu clair lumineux, plus lisible sur fond crème
+   et plus distinct du bleu foncé Sideline utilisé pour les titres. */
+.chamber[data-chamber="AN"] {
+  background: #20acd9;
+  color: #fff;
+}
+/* Sénat : violet (R13-G 2026-04-21, demande Cyril) — remplace l'ancien
+   vert lime, contraste plus élégant avec le bleu AN. */
+.chamber[data-chamber="Senat"],
+.chamber[data-chamber="Sénat"] {
+  background: #a85c9e;
+  color: #fff;
+}
+/* R13-G : MinSports — doré (demande Cyril). Avant : gris --muted par défaut. */
+.chamber[data-chamber="MinSports"] {
+  background: #d7b800;
+  color: #1b2235;
+}
+
+/* ----------------------------------------------------------------------- */
+/* R25-E (2026-04-23) — Palette couleurs fixes par chamber.
+   Avant : seuls AN / Senat / MinSports avaient une couleur dédiée, tout
+   le reste retombait sur --muted (gris). Cyril veut des couleurs fixes
+   pour chaque badge afin d'améliorer la lisibilité des listings denses.
+   Choix visuel :
+     * Gouvernement & ministères : gamme bleu marine / marine foncé
+       (couleur institutionnelle), nuancée par département.
+     * Autorités (AAI + hautes juridictions) : teintes chaudes et
+       bordeaux pour trancher avec le gouvernement (rôle contre-pouvoir).
+     * Opérateurs publics sport : palette orange / rouge vif (énergie).
+     * Mouvement sportif : bleu olympique + paralympique + vert FDSF.
+     * JORF / Alpes2030 : vert foncé + bleu montagne.
+   Les valeurs peuvent être ajustées plus tard (demande explicite Cyril :
+   "Les couleurs doivent être fixées, je les changeraient ensuite"). */
+
+/* ---- Gouvernement ---- */
+.chamber[data-chamber="Matignon"]        { background: #1b3b6f; color: #fff; }
+.chamber[data-chamber="Elysee"]          { background: #0e2d5a; color: #fff; }
+.chamber[data-chamber="MinARMEES"]       { background: #2c5f2d; color: #fff; }
+.chamber[data-chamber="MinJUSTICE"]      { background: #7b1e1e; color: #fff; }
+.chamber[data-chamber="MinINTERIEUR"]    { background: #424651; color: #fff; }
+.chamber[data-chamber="MinCULTURE"]      { background: #b34a6f; color: #fff; }
+.chamber[data-chamber="MinEDUCATION"]    { background: #1e5aa8; color: #fff; }
+.chamber[data-chamber="MinECO"]          { background: #0d7b68; color: #fff; }
+.chamber[data-chamber="MinSANTE"]        { background: #6a4e9e; color: #fff; }
+.chamber[data-chamber="MinTRAVAIL"]      { background: #d46b08; color: #fff; }
+.chamber[data-chamber="MinAFFAIRES"]     { background: #4a7a96; color: #fff; }
+.chamber[data-chamber="MinESR"]          { background: #805ad5; color: #fff; }
+.chamber[data-chamber="MinCOHESION"]     { background: #8a4e45; color: #fff; }
+
+/* ---- Autorités administratives indépendantes + hautes juridictions ---- */
+.chamber[data-chamber="ARCOM"]           { background: #e56b1f; color: #fff; }
+.chamber[data-chamber="ANJ"]             { background: #c3174d; color: #fff; }
+.chamber[data-chamber="AdlC"]            { background: #2d5f7f; color: #fff; }
+.chamber[data-chamber="CE"]              { background: #314b82; color: #fff; }
+.chamber[data-chamber="CC"]              { background: #8b1f3f; color: #fff; }
+.chamber[data-chamber="DDD"]             { background: #1d7355; color: #fff; }
+.chamber[data-chamber="CourComptes"]     { background: #4a3f2c; color: #fff; }
+
+/* ---- Opérateurs publics sport (ANS, INSEP, INJEP, AFLD) ---- */
+.chamber[data-chamber="AFLD"]            { background: #c84a4a; color: #fff; }
+.chamber[data-chamber="ANS"]             { background: #eb5f28; color: #fff; }
+.chamber[data-chamber="INJEP"]           { background: #008478; color: #fff; }
+.chamber[data-chamber="INSEP"]           { background: #e6005b; color: #fff; }
+
+/* ---- Mouvement sportif (CNOSF, CPSF, FDSF) ---- */
+.chamber[data-chamber="CNOSF"]           { background: #0055a4; color: #fff; }
+.chamber[data-chamber="CPSF"]            { background: #3e7bb7; color: #fff; }
+.chamber[data-chamber="FDSF"]            { background: #00a651; color: #fff; }
+
+/* ---- Autres (Alpes2030 COJOP, JORF) ---- */
+.chamber[data-chamber="Alpes2030"]       { background: #6c8bc4; color: #fff; }
+.chamber[data-chamber="JORF"]            { background: #0d6b40; color: #fff; }
+
+/* ---------- Badge statut procédural (dossiers législatifs) -------------- */
+/* Affiche l'étape de navette du dossier : "1ère lecture · commission",
+   "CMP", "promulgation", etc. Complète le badge chambre, placé juste après.
+   R13-E (2026-04-21) : fond doré + texte crème gras (demande user).
+   Le flag promulgated garde un vert distinct pour signaler l'aboutissement. */
+.status {
+  display: inline-block;
+  background: #C9A227;           /* doré Sideline (ambre soutenu) */
+  color: #FFF8E1;                /* crème clair pour contraste max */
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+.status.status-promulgated {
+  background: var(--sl-green);
+  color: #fff;
+}
+
+/* Méta : la méta-line est sous le titre, mais chambre · date · auteur · tags
+   sont TOUS sur la même ligne (wrap naturel si la fenêtre est étroite). */
+.item-meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 4px;
+  margin-left: 0;
+  line-height: 1.7;
+}
+.item-meta .meta-main,
+.item-meta .meta-tags {
+  display: inline;
+}
+/* Séparateur visuel entre la meta-main et les tags quand les deux sont
+   présents. Pas de séparateur pour un éventuel espace vide. */
+.item-meta .meta-tags:not(:empty)::before {
+  content: " · ";
+  color: var(--muted);
+  margin: 0 2px;
+}
+/* UX-C (2026-04-21) : les dates sont la seule information qui porte la
+   couleur rouge Sideline — rouge + gras pour bien les repérer dans la liste.
+   Les mots-clés ci-dessous passent en italique/gras sans couleur (ni fond
+   ni police) pour ne plus concurrencer visuellement les dates. */
+.item-meta .date {
+  color: var(--sl-red);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Tags mots-clés (home + listing + détail) -------------------- */
+/* UX-C (2026-04-21) — refonte : retrait de la couleur de fond et de la
+   couleur de police (réservées aux dates). Les mots-clés conservent juste
+   leur empreinte typographique : italique + gras. Les variantes par famille
+   data-family sont conservées pour compatibilité DOM mais n'influent plus
+   sur le rendu visuel. */
+.kw-list {
+  display: inline;
+  margin: 0;
+  line-height: 1.9;
+}
+.kw-tag {
+  display: inline-block;
+  background: transparent;
+  /* R13-G (2026-04-21) : teinte terracotta demandée par Cyril — contraste
+     avec la palette principale (bleu/rouge/crème) sans écraser le texte. */
+  color: #8E5A44;
+  padding: 0 4px 0 0;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0;
+  /* R13-G : margin supprimée (était 0 2px 0 0). Cyril veut un enchaînement
+     plus serré, le séparateur " | " porte déjà l'écart visuel. */
+  margin: 0;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+/* Retire tout background des anciens variants data-family (rendu uniforme). */
+.kw-tag[data-family] { background: transparent; color: #8E5A44; }
+/* Séparateur visuel léger entre mots-clés : barre verticale (R13-B).
+   R13-G : margin-left 0 (était -2px pour compenser le margin supprimé
+   ci-dessus). */
+.kw-tag + .kw-tag::before {
+  content: " | ";
+  font-style: normal;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 0;
+}
+
+.snippet-inline {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+
+/* ---------- Listing (liste catégorie) ------------------------------------ */
+.listing h1 {
+  color: var(--sl-blue);
+  font-family: var(--font-title);
+}
+.listing .intro { color: var(--muted); margin-bottom: 18px; }
+.items { list-style: none; padding: 0; margin: 12px 0; }
+.items li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.items li a.title {
+  font-family: var(--font-title);
+  font-weight: 600;
+  color: var(--sl-blue);
+  font-size: 15.5px;
+}
+.items li a.title:hover { color: var(--sl-red); text-decoration: none; }
+/* Item sans URL publique (ex : réunions AN) : rendu titre en texte simple */
+.items li .title.no-link {
+  font-family: var(--font-title);
+  font-weight: 600;
+  color: var(--sl-blue);
+  font-size: 15.5px;
+  display: inline-block;
+}
+.items .meta {
+  color: var(--muted); font-size: 12.5px;
+  display: block; margin-top: 4px;
+}
+.items .snippet-inline {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+  margin-top: 6px;
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+}
+
+/* ---------- Page détail (item) ------------------------------------------- */
+.breadcrumb {
+  font-size: 13px; color: var(--muted); margin-bottom: 16px;
+}
+.breadcrumb a { color: var(--sl-blue); }
+.breadcrumb a:hover { color: var(--sl-red); }
+
+.item h1 {
+  color: var(--sl-blue);
+  font-family: var(--font-title);
+  margin-top: 0;
+}
+.item .meta { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+.item .meta > * { margin-right: 10px; }
+/* .item .chamber hérite de la règle globale .chamber[data-chamber="..."] */
+
+.item .snippet {
+  background: #fff;
+  border-left: 4px solid var(--sl-red);
+  color: #2a2f3d;
+  font-size: 16px;
+  font-style: italic;
+  margin: 18px 0;
+  padding: 14px 18px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  box-shadow: 0 1px 2px rgba(18,37,73,0.04);
+}
+
+.item .kw-block {
+  background: rgba(218,68,49,0.06);
+  border: 1px solid rgba(218,68,49,0.2);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin: 16px 0 20px;
+}
+.item .kw-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--sl-red);
+  margin-bottom: 6px;
+}
+.item .tags { list-style: none; padding: 0; margin: 0; }
+.item .tags li {
+  display: inline-block;
+  background: var(--sl-red);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 3px 4px 3px 0;
+}
+
+.item .btn {
+  display: inline-block;
+  background: var(--sl-blue);
+  color: var(--sl-cream) !important;
+  padding: 10px 18px;
+  border-radius: 6px;
+  margin-top: 18px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border: 2px solid var(--sl-blue);
+  transition: background .15s, color .15s, border-color .15s;
+}
+.item .btn:hover {
+  text-decoration: none;
+  background: var(--sl-red);
+  border-color: var(--sl-red);
+  color: #fff !important;
+}
+
+/* ---------- Lien auteur (Questions) ---------------------------------- */
+.auteur-link {
+  color: var(--sl-blue);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  font-weight: 500;
+}
+.auteur-link:hover {
+  color: var(--sl-red);
+  text-decoration-style: solid;
+}
+.auteur-line {
+  margin: 2px 0 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.auteur-line .auteur-link,
+.auteur-line .auteur-name {
+  color: var(--sl-blue);
+  font-weight: 600;
+}
+.auteur-groupe {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+  margin-left: 4px;
+}
+/* R23-B (2026-04-23) : curseur d'aide quand le tooltip libellé long
+   (title="…") est présent — indique visuellement qu'il y a plus d'info
+   au hover. Géré via l'attribut [title] pour ne pas s'afficher sur les
+   items Sénat / legacy sans libellé long. */
+.auteur-groupe[title] {
+  cursor: help;
+  border-bottom: 1px dotted var(--muted);
+}
+
+/* R23-C (2026-04-23) : portrait parlementaire.
+   R23-C4 (2026-04-23) : agrandi à 56x56 avec border-radius 8 pour
+   matcher visuellement les logos AN/Senat des cartes dossiers
+   législatifs (.dosleg-card__icon). Le <li> parent est passé en
+   flex horizontal via .listing-item (colonne gauche photo + body).
+   Format carré arrondi demandé par Cyril (border-radius 8px, pas round
+   pour éviter l'effet "pastille"). */
+.auteur-photo {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  background: var(--sl-grey-100, #eee);
+  /* Petit contour pour lisibilité sur fond clair */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+.auteur-photo-lg {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  margin-right: 14px;
+}
+
+/* R23-C4 (2026-04-23) : layout deux colonnes pour les items de listing
+   (amendements, questions, communiqués, agenda, CR…). Même structure
+   visuelle que .dosleg-card (photo/logo en colonne gauche 56x56, body
+   à droite). Si .listing-item__photo n'est pas présent (pas de photo
+   dispo pour l'item), le body prend toute la largeur naturellement.
+   Si la photo 404 côté navigateur, onerror masque .listing-item__photo
+   (display:none), même comportement. */
+.listing .items > li.listing-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.listing-item__photo {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+}
+.listing-item__photo .auteur-photo {
+  margin: 0;
+}
+.listing-item__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ---------- Pagination inline (listings) ----------------------------- */
+.pagination-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 22px 0 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.pagination-inline a,
+.pagination-inline span {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: var(--sl-blue);
+}
+.pagination-inline a:hover {
+  background: var(--sl-blue);
+  color: #fff;
+}
+.pagination-inline .pg-num {
+  min-width: 28px;
+  text-align: center;
+}
+.pagination-inline .pg-current {
+  background: var(--sl-red);
+  color: #fff;
+  font-weight: 700;
+}
+.pagination-inline .pg-disabled {
+  color: #b8bcc8;
+}
+.pagination-inline .pg-gap {
+  color: var(--muted);
+  padding: 4px 2px;
+}
+.pagination-inline .pg-info {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+@media (max-width: 640px) {
+  .pagination-inline .pg-info { display: none; }
+}
+
+/* ---------- Sidebar : cards modulaires (recherche + agenda) -----------
+   La sidebar est maintenant gérée par layouts/_default/baseof.html et
+   apparaît sur toutes les pages (grille 2 colonnes plus haut). Chaque
+   module est une card autonome.
+*/
+.side-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px 18px 14px;
+  box-shadow: 0 1px 3px rgba(18, 37, 73, 0.05);
+}
+
+/* R13-J (2026-04-21) : le bloc méta (date MAJ + version) a été déplacé
+   dans le header (.nav .nav-meta). .side-meta reste comme no-op pour
+   ne pas casser les anciens builds. */
+.side-meta { display: none; }
+
+/* R17 (2026-04-22) : module image-only "Sideline Conseil" dans la sidebar.
+   Hérite de .side-card pour la bordure + border-radius identiques au module
+   Recherche. On annule le padding et on ajoute overflow:hidden pour que
+   l'image épouse les angles arrondis. display:block pour que l'ancre prenne
+   toute la largeur du module. */
+.side-card--brand {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  line-height: 0;               /* supprime le gap inline-block sous l'img */
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.side-card--brand:hover,
+.side-card--brand:focus-visible {
+  box-shadow: 0 2px 8px rgba(18, 37, 73, 0.12);
+  transform: translateY(-1px);
+}
+.side-card--brand img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Module recherche dans la sidebar.
+   R13-G : plus de gradient (demande Cyril) — fond bleu Sideline uni,
+   police crème pour cohérence avec le header.
+   R22+ (2026-04-23) : fond ajusté à #11264b (bleu marine plus profond
+   que le --sl-blue d'origine) sur demande Cyril. Border + bouton
+   alignés sur la même teinte pour conserver l'harmonie visuelle. */
+.side-card--search {
+  background: #11264b;
+  color: var(--sl-cream);
+  border-color: #11264b;
+}
+.side-card--search .side-title {
+  color: var(--sl-cream);
+}
+.side-card--search .side-caption {
+  color: rgba(238, 232, 209, 0.75);
+}
+.side-search {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+.side-search input[type="search"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  background: #fff;
+  color: var(--fg);
+}
+.side-search input[type="search"]:focus {
+  outline: 2px solid var(--sl-blue);
+  outline-offset: 1px;
+  border-color: var(--sl-blue);
+}
+.side-search button {
+  flex: 0 0 36px;
+  border: 0;
+  border-radius: 6px;
+  /* R22+ (2026-04-23) : aligné sur le nouveau fond carte #11264b. */
+  background: #11264b;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.side-search button:hover {
+  background: var(--sl-red);
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0);
+  white-space: nowrap; border: 0;
+}
+.side-title {
+  margin: 0;
+  color: var(--sl-blue);
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+.side-caption {
+  margin: 2px 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+}
+.side-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.side-item {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+  /* R17 (2026-04-22) : centre verticalement la pastille date (courte) par
+     rapport au corps titre + cartouche (multi-lignes). Avant, la date
+     collait en haut du <li>, mauvaise lisibilité quand le titre fait 3+
+     lignes. align-items:center est appliqué à chaque cellule de la grille. */
+  align-items: center;
+}
+.side-item:last-child { border-bottom: 0; }
+.side-date time {
+  display: inline-block;
+  /* R13-G (2026-04-21) : date en fond rouge Sideline (demande Cyril) —
+     plus distinctive que l'ancien bleu, cohérent avec la barre
+     horizontale rouge sous le header. */
+  background: var(--sl-red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 0;
+  width: 100%;
+  text-align: center;
+  border-radius: 4px;
+}
+/* R13-M (2026-04-21) : chamber + titre vraiment inline (flex baseline),
+   pas de retour chariot entre les deux. Le titre garde son line-clamp 3
+   pour ne pas déborder. */
+/* R19-D (2026-04-23) : plus de flex — le badge chambre coule INLINE avec
+   le texte du titre (comme un run de texte HTML). line-clamp 3 est porté
+   sur .side-body pour tronquer l'ensemble sans jamais casser ligne 1 entre
+   le badge et le début du titre. Le badge utilise vertical-align:baseline
+   + un padding-y symétrique pour rester aligné sur la ligne de base du titre. */
+.side-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--fg);
+}
+.side-body .chamber {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  margin-right: 5px;
+  vertical-align: baseline;
+}
+.side-title-link {
+  color: var(--sl-blue);
+}
+.side-title-link:hover { color: var(--sl-red); }
+.side-title-text { color: var(--fg); }
+.side-more {
+  margin: 10px 0 0;
+  text-align: right;
+  font-size: 12px;
+}
+.side-more a { color: var(--sl-blue); font-weight: 600; }
+.side-more a:hover { color: var(--sl-red); }
+.side-empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+/* ---------- Listings : Agenda (À venir / Passé) & Comptes rendus ------- */
+.empty-state {
+  color: var(--muted);
+  font-style: italic;
+  padding: 10px 0;
+}
+.agenda-section,
+.cr-chamber {
+  margin: 22px 0 8px;
+  color: var(--sl-blue);
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--sl-red);
+}
+.cr-chamber[data-chamber="AN"] { border-bottom-color: var(--sl-blue); }
+
+/* R23-E (2026-04-23) — logo chambre SVG sur la liste des CR (remplace
+   le badge texte .chamber sur `comptes_rendus/list.html`). Le logo est
+   un carré 22x22 avec un leger border-radius et un filet discret pour
+   se detacher sur fond creme. Fallback gracieux : si l'asset 404 (ne
+   devrait pas arriver avec les SVG locaux), onerror masque l'img et on
+   retombe visuellement sur la date (l'info reste dans le h2.cr-chamber
+   de la section). */
+.chamber-logo {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+  object-fit: contain;
+  border-radius: 3px;
+  background: #fff;
+  padding: 1px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  margin-right: 2px;
+}
+
+/* R23-H (2026-04-23) — Filtre par famille de source (5 boutons) en
+   tete des listings agenda et communiques. `data-family-source` porte
+   le slug de famille sur chaque <li> ; le JS bascule visibility.
+   Etat actif : aria-pressed="true" -> fond accent. */
+.source-family-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 16px 0;
+  padding: 4px 0;
+}
+.source-family-filter .sff-btn {
+  font-family: var(--font);
+  font-size: 13px;
+  padding: 4px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.source-family-filter .sff-btn:hover {
+  border-color: rgba(0, 0, 0, 0.24);
+}
+.source-family-filter .sff-btn[aria-pressed="true"] {
+  background: var(--accent, #2b5fa8);
+  border-color: var(--accent, #2b5fa8);
+  color: #fff;
+}
+.section-count {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 6px;
+  font-family: var(--font);
+}
+.cr-list { margin-top: 6px; }
+.cr-item { }
+.cr-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cr-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--muted);
+  color: #fff;
+  flex: 0 0 auto;
+}
+.cr-badge-analytique { background: var(--sl-green); }
+.cr-badge-integral   { background: var(--sl-blue); }
+
+/* ---------- Listing : Dossiers législatifs (maquette type AN) ---------- */
+.dosleg-list .dosleg-card {
+  display: flex;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px 16px;
+  margin: 14px 0;
+  box-shadow: 0 1px 3px rgba(18, 37, 73, 0.04);
+}
+/* R19-A (2026-04-23) : fond transparent — les PNG officiels AN/Sénat
+   portent déjà leur fond institutionnel. Le background coloré de R13-M
+   a été retiré à la demande de Cyril. */
+.dosleg-card__icon {
+  flex: 0 0 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dosleg-card__icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.dosleg-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dosleg-card__title {
+  margin: 0 0 4px;
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: -0.2px;
+}
+.dosleg-card__title a {
+  color: var(--sl-blue);
+  text-decoration: none;
+}
+.dosleg-card__title a:hover {
+  color: var(--sl-red);
+  text-decoration: underline;
+}
+.dosleg-card__type {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--fg);
+  margin: 4px 0 6px;
+}
+.dosleg-card__deposit {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+/* UX-C : date de dépôt/promulgation en rouge + gras, comme les autres dates. */
+.dosleg-card__deposit time {
+  color: var(--sl-red);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* R13-E (2026-04-21) : même traitement que .status (fond doré + crème gras)
+   pour que les cartes dossiers législatifs soient visuellement cohérentes
+   avec la home et la liste. Le flag promulgated passe en vert pour
+   signaler l'aboutissement législatif. */
+.dosleg-card__status {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 3px 10px;
+  background: #C9A227;
+  color: #FFF8E1;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  border-radius: 4px;
+}
+.dosleg-card__status--promulgated {
+  background: var(--sl-green);
+  color: #fff;
+}
+.dosleg-card__kws {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dosleg-card .snippet-inline {
+  margin-top: 8px;
+}
+.dosleg-card__links {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 18px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+.dosleg-card__cta,
+.dosleg-card__detail {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sl-blue);
+  text-decoration: none;
+}
+.dosleg-card__cta:hover,
+.dosleg-card__detail:hover {
+  color: var(--sl-red);
+  text-decoration: underline;
+}
+.dosleg-card__detail {
+  color: var(--muted);
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .dosleg-list .dosleg-card {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dosleg-card__icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+  }
+  .dosleg-card__links {
+    justify-content: flex-start;
+  }
+}
+
+/* ---------- Accueil : thématiques repliables -------------------------- */
+.cat-fold {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: 10px 0;
+  padding: 0;
+}
+.cat-fold > summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 12px 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: var(--font-title);
+}
+.cat-fold > summary::-webkit-details-marker { display: none; }
+.cat-fold > summary::before {
+  content: "▸";
+  color: var(--sl-red);
+  font-size: 14px;
+  transition: transform .15s;
+  display: inline-block;
+}
+.cat-fold[open] > summary::before {
+  transform: rotate(90deg);
+}
+.cat-label {
+  font-weight: 800;
+  font-size: 17px;
+  color: var(--sl-blue);
+}
+.cat-count {
+  background: var(--sl-red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-family: var(--font);
+  letter-spacing: 0.3px;
+}
+.cat-window {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: var(--font);
+  font-style: italic;
+}
+.cat-all {
+  margin-left: auto;
+  font-size: 12px;
+  font-family: var(--font);
+  color: var(--sl-blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+.cat-all:hover { color: var(--sl-red); }
+.cat-fold > ul,
+.cat-fold > p {
+  padding: 0 18px 14px 18px;
+  margin: 0;
+}
+/* Items dépliés dans une thématique : padding interne L/R 18px pour
+   éviter que les titres/tags touchent le bord de la carte. Spécificité
+   renforcée (.home .content .cat-fold …) pour battre `.home .content ul li`
+   qui sans ça annule le padding. */
+.home .content .cat-fold > ul li,
+.cat-fold > ul li {
+  padding-left: 18px;
+  padding-right: 18px;
+  overflow-wrap: anywhere;
+}
+/* Tags mots-clés en ligne avec meta-main (cohérent avec listings). */
+.home .content .cat-fold > ul li .item-meta .meta-main,
+.home .content .cat-fold > ul li .item-meta .meta-tags,
+.home .content ul li .item-meta .meta-main,
+.home .content ul li .item-meta .meta-tags {
+  display: inline;
+}
+
+/* ---------- Accueil : section Dernières 24 h (compact, sans tags) --------- */
+.recent-24 ul,
+.recent-24 > ul {
+  margin: 0;
+  padding-left: 20px;
+}
+.recent-24 ul li {
+  padding: 5px 0;
+  margin: 0;
+  border-bottom: 1px dashed var(--line);
+  line-height: 1.4;
+}
+.recent-24 ul li:last-child { border-bottom: 0; }
+.recent-24 .kw-tag { display: none; }
+.recent-24 .snippet-inline { display: none; }
+
+/* ---------- Dossier législatif : timeline procédurale --------------------- */
+.dosleg-timeline {
+  margin: 24px 0 28px;
+  padding: 20px 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.dosleg-timeline h2 {
+  margin: 0 0 4px 0;
+  color: var(--sl-blue);
+  font-size: 18px;
+}
+.dosleg-timeline .timeline-caption {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 18px 0;
+}
+.timeline {
+  list-style: none;
+  padding: 0 0 0 22px;
+  margin: 0;
+  position: relative;
+  border-left: 2px solid var(--line);
+}
+.timeline-step {
+  position: relative;
+  padding: 0 0 18px 16px;
+}
+.timeline-step:last-child { padding-bottom: 0; }
+.timeline-marker {
+  position: absolute;
+  left: -27px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--sl-blue);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--sl-blue);
+}
+.timeline-step[data-institution="Sénat"] .timeline-marker {
+  background: var(--sl-red);
+  box-shadow: 0 0 0 2px var(--sl-red);
+}
+.timeline-step--promulgation .timeline-marker {
+  background: var(--sl-green);
+  box-shadow: 0 0 0 2px var(--sl-green);
+  width: 14px;
+  height: 14px;
+  top: 3px;
+  left: -28px;
+}
+.timeline-step--promulgation {
+  background: rgba(102,162,102,0.08);
+  border-radius: 6px;
+  padding: 6px 10px 8px 16px;
+}
+.timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.timeline-date {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--sl-blue);
+}
+.timeline-inst {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: var(--sl-blue);
+  color: #fff;
+}
+.timeline-inst[data-inst="Sénat"] { background: var(--sl-red); }
+.timeline-inst[data-inst="CMP"]   { background: #7b5ea0; }
+.timeline-inst[data-inst="JORF"]  { background: var(--sl-green); }
+.timeline-stage {
+  font-style: italic;
+  color: var(--muted);
+}
+.timeline-lib {
+  color: var(--fg);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.timeline-step--promulgation .timeline-lib {
+  font-weight: 700;
+  color: #2c5f2c;
+}
+.timeline-code {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8891a3;
+  font-family: "SFMono-Regular", "Menlo", Consolas, monospace;
+  letter-spacing: 0.2px;
+}
+
+/* ---------- Footer -------------------------------------------------------- */
+.site-footer {
+  background: var(--sl-blue);
+  border-top: 4px solid var(--sl-red);
+  color: var(--sl-cream);
+  font-size: 13px;
+  padding: 20px 0;
+  margin-top: 60px;
+}
+.site-footer a { color: var(--sl-cream); text-decoration: underline; }
+.site-footer a:hover { color: #fff; }
+.site-footer .small { font-size: 11px; opacity: .7; }
+
+/* ---------- Page Recherche ----------------------------------------------- */
+.search-page h1 {
+  color: var(--sl-blue);
+  margin: 6px 0 10px;
+}
+.search-page .page-intro {
+  color: var(--muted);
+  margin: 0 0 18px;
+  font-size: 14px;
+}
+.search-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px 200px;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(18,37,73,0.05);
+}
+@media (max-width: 720px) {
+  .search-form { grid-template-columns: 1fr; }
+}
+.search-form input[type="search"],
+.search-form select {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 14px;
+  background: #fff;
+  color: var(--fg);
+}
+.search-form input[type="search"]:focus,
+.search-form select:focus {
+  outline: 2px solid var(--sl-blue);
+  outline-offset: 1px;
+  border-color: var(--sl-blue);
+}
+.search-status {
+  color: var(--muted);
+  font-size: 13px;
+  font-style: italic;
+  margin: 14px 2px 8px;
+}
+.search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.search-result {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 16px 10px;
+  box-shadow: 0 1px 2px rgba(18,37,73,0.04);
+}
+.search-result .search-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.search-result .search-cat {
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  font-size: 10.5px;
+  color: var(--sl-blue);
+}
+.search-result .search-title {
+  margin: 4px 0 6px;
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.search-result .search-title a {
+  color: var(--sl-blue);
+}
+.search-result .search-title a:hover { color: var(--sl-red); }
+.search-result .search-snippet {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+.search-result .search-kws {
+  margin-top: 4px;
+}
+.search-more {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+  padding: 12px;
+  background: rgba(218,68,49,0.05);
+  border-radius: var(--radius);
+}
+
+/* Lien recherche dans le header (accent subtil) */
+.nav a.nav-search {
+  background: var(--sl-red);
+  /* R15 (2026-04-22) : padding H aligné sur les autres entrées (5px)
+     pour conserver une hauteur visuelle homogène après la refonte. */
+  padding: 4px 5px;
+  border-radius: 4px;
+  opacity: 1;
+}
+.nav a.nav-search:hover {
+  background: #fff;
+  color: var(--sl-blue);
+  border-bottom: 0;
+}
+
+/* R13-J (2026-04-21) : agenda — chambre + titre inline sur la même ligne
+   (demande Cyril patch 5).
+   R19-E (2026-04-23) : on abandonne flex pour un flux inline. Avec flex +
+   flex-wrap, quand le titre ne rentre pas il saute à la ligne ENTIÈREMENT
+   sous le badge, créant une ligne 1 "MinSports" + ligne 2 titre. En inline,
+   le badge reste collé au début du titre et la suite du titre wrappe
+   naturellement sans laisser de blanc sous le badge. */
+.agenda-row {
+  display: block;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.agenda-row .chamber {
+  display: inline-block;
+  margin-right: 10px;
+  vertical-align: baseline;
+}
+.agenda-row .title {
+  display: inline;
+}
+
+/* R13-J (2026-04-21) : cartouche blanc arrondi pour chaque occurrence
+   dans les pages de listing (questions, amendements, comptes-rendus,
+   publications, agenda, JORF, dossiers_legislatifs). Demande Cyril :
+   "même largeur d'un fond blanc borduré avec angles arrondis" comme
+   les thématiques de la home, mais sans menu dépliable. */
+.listing .items > li {
+  list-style: none;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin: 0 0 12px;
+  box-shadow: 0 1px 3px rgba(18, 37, 73, 0.04);
+}
+.listing .items { padding-left: 0; }
+.listing .items .title {
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sl-blue);
+}
+.listing .items .title:hover { color: var(--sl-red); }
+
+/* R13-J : date en gras + format long "JJ mois complet AAAA" (demande Cyril).
+   Appliqué à toutes les pages de listing. */
+.item-meta time.date,
+.listing .items .date,
+.home .content .date {
+  font-weight: 700;
+  color: var(--sl-red);
+}
+
+/* R13-J : auteur question inline dans le titre, même taille de police.
+   Placé AVANT le titre via .auteur-inline.
+   R13-L : barre verticale séparateur .auteur-sep entre auteur et titre. */
+.auteur-inline {
+  font-family: var(--font-title);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sl-blue);
+}
+.auteur-inline:hover { color: var(--sl-red); }
+.auteur-sep {
+  color: var(--muted);
+  font-weight: 400;
+  margin: 0 4px;
+}
+
+/* R13-J : chip sort amendement — couleurs sémantiques par valeur.
+   - rejeté / irrecevable : rouge / noir
+   - adopté : vert
+   - non soutenu : gris
+   - autre (en discussion, etc.) : bleu Sideline */
+.sort-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--sl-blue);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.sort-chip[data-sort="rejete"],
+.sort-chip[data-sort="rejetee"],
+.sort-chip[data-sort="rejets"] { background: var(--sl-red); }
+.sort-chip[data-sort="adopte"],
+.sort-chip[data-sort="adoptee"] { background: var(--sl-green); }
+.sort-chip[data-sort="non-soutenu"],
+.sort-chip[data-sort="non-soutenue"] { background: var(--muted); }
+.sort-chip[data-sort="irrecevable"] { background: #1a1a1a; }
+.sort-chip[data-sort="retire"],
+.sort-chip[data-sort="retiree"] { background: #8a1a1a; }
+
+/* R13-J : badge "Retiré" pour les dossiers législatifs abandonnés. */
+.status[data-status="retire"],
+.status.status-retire { background: #8a1a1a; color: #fff; }
+
+/* ---------- Responsive ---------------------------------------------------- */
+@media (max-width: 640px) {
+  .container { padding: 16px; }
+  .site-header .container { flex-direction: column; align-items: flex-start; }
+  .nav a:first-child { margin-left: 0; }
+  .nav .nav-meta { margin-left: 0; text-align: left; width: 100%; }
+  h1 { font-size: 24px; letter-spacing: -0.3px; }
+  h2 { font-size: 19px; letter-spacing: -0.3px; }
+}

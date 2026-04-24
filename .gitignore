@@ -1,0 +1,53 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.env
+data/cache/
+data/test_*.sqlite3
+data/test_*.sqlite3-journal
+data/sample_*.html
+# DB runtime persistée via actions/cache, pas via git
+data/veille.sqlite3
+data/veille.sqlite3-journal
+data/*.sqlite3.bak.*
+data/senat_slugs.json
+check_run.py
+site/public/
+site/resources/
+site/content/items/*/
+site/data/by_category/
+site/data/by_chamber/
+site/data/index.json
+*.zip
+*.tmp
+.DS_Store
+_tmp_*.py
+site/content/_index.md
+
+# Artefacts build Hugo + digest courant
+site/.hugo_build.lock
+data/last_digest.html
+
+# Miroirs docs externes (schémas AN)
+references/
+
+# Artefacts héritages de l'instance sport (ne pas versionner sur Lidl)
+HANDOFF.md
+ROLLBACK.md
+docs/
+
+# Scripts one-shot
+scripts/diag_*.py
+scripts/diag_*.txt
+push_*.command
+commit_*.command
+deploy_*.command
+finish_*.command
+run_clean_*.command
+cleanup_*.command
+reset_*.command

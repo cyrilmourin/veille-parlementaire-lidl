@@ -1,0 +1,380 @@
+# Inventaire des sources — veille parlementaire Lidl (Sideline Conseil)
+# Validé en live (héritage projet sport) sur data.assemblee-nationale.fr,
+# data.senat.fr et les portails officiels. Portée resserrée vers la grande
+# distribution : les sources sport-specifics (ANS, AFLD, INSEP, ARCOM, ANJ,
+# CNOSF, FDSF, Alpes 2030, INJEP, IGESR, Défenseur des droits) ont été
+# retirées ; les ministères sport/éducation/armées/culture/affaires
+# étrangères/justice également.
+#
+# Catégories Follaw.sv :
+#   dossiers_legislatifs | jorf | amendements | questions | comptes_rendus
+#   publications        | nominations | agenda | communiques
+
+# ============================================================================
+# PARLEMENT — Assemblée nationale
+# ============================================================================
+assemblee_nationale:
+  base: https://data.assemblee-nationale.fr/static/openData/repository/17
+  sources:
+    - id: an_dossiers_legislatifs
+      category: dossiers_legislatifs
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip
+      format: json_zip
+
+    - id: an_amendements
+      category: amendements
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/loi/amendements_div_legis/Amendements.json.zip
+      format: json_zip
+      since_days: 30
+
+    - id: an_questions_ecrites
+      category: questions
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_ecrites/Questions_ecrites.json.zip
+      format: json_zip
+      since_days: 30
+
+    - id: an_questions_gouvernement
+      category: questions
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_gouvernement/Questions_gouvernement.json.zip
+      format: json_zip
+      since_days: 30
+
+    - id: an_questions_orales_sans_debat
+      category: questions
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_orales_sans_debat/Questions_orales_sans_debat.json.zip
+      format: json_zip
+      since_days: 30
+
+    - id: an_agenda
+      category: agenda
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/vp/reunions/Agenda.json.zip
+      format: json_zip
+      since_days: 30
+
+    - id: an_syceron
+      category: comptes_rendus
+      url: https://data.assemblee-nationale.fr/static/openData/repository/17/vp/syceronbrut/syseron.xml.zip
+      format: xml_zip
+      since_days: 30
+
+    - id: an_rapports
+      category: communiques
+      url: https://www2.assemblee-nationale.fr/documents/liste?type=rapports&legis=17
+      format: an_rapports_html
+
+    - id: an_cr_commissions
+      category: comptes_rendus
+      url: https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/
+      format: an_cr_commissions
+      max_new_per_run: 10
+      miss_tolerance: 3
+      max_num: 99
+
+# ============================================================================
+# PARLEMENT — Sénat
+# ============================================================================
+senat:
+  sources:
+    - id: senat_akn_depots
+      category: dossiers_legislatifs
+      url: https://www.senat.fr/akomantoso/depots.xml
+      format: akn_index
+      since_days: 90
+
+    - id: senat_akn_adoptions
+      category: dossiers_legislatifs
+      url: https://www.senat.fr/akomantoso/adoptions.xml
+      format: akn_index
+      since_days: 90
+
+    - id: senat_dosleg
+      category: dossiers_legislatifs
+      url: https://data.senat.fr/data/dosleg/dosleg.csv.zip
+      format: csv_zip
+
+    - id: senat_ppl
+      category: dossiers_legislatifs
+      url: https://data.senat.fr/data/ppl/ppl.csv.zip
+      format: csv_zip
+
+    - id: senat_rapports
+      category: communiques
+      url: https://data.senat.fr/data/rapports/rapports.csv.zip
+      format: csv_zip
+
+    - id: senat_promulguees
+      category: dossiers_legislatifs
+      url: https://data.senat.fr/data/loisprom/loisprom.csv.zip
+      format: csv_zip
+
+    - id: senat_amendements
+      category: amendements
+      url: https://data.senat.fr/amendements/
+      format: senat_amendements
+      since_days: 30
+
+    - id: senat_questions
+      category: questions
+      url: https://data.senat.fr/data/questions/questions.csv.zip
+      format: csv_zip
+
+    - id: senat_qg
+      category: questions
+      url: https://data.senat.fr/data/questions/qg.csv.zip
+      format: csv_zip
+
+    - id: senat_questions_1an
+      category: questions
+      url: https://data.senat.fr/data/questions/questions-1an.csv.zip
+      format: csv_zip
+
+    - id: senat_debats
+      category: comptes_rendus
+      url: https://data.senat.fr/data/debats/debats.csv.zip
+      format: csv_zip
+
+    - id: senat_cri
+      category: comptes_rendus
+      url: https://data.senat.fr/data/debats/cri.zip
+      format: csv_zip
+
+    - id: senat_rss
+      category: communiques
+      url: https://data.senat.fr/feed/actualites-rss.xml
+      format: rss
+
+    # Agenda global Sénat — bloqué par WAF (vu sur projet sport). Laissé
+    # désactivé, on passe par les pages commissions (bloc ci-dessous).
+    - id: senat_agenda
+      category: agenda
+      url: https://www.senat.fr/agenda/
+      format: senat_agenda_daily
+      before_days: 7
+      after_days: 30
+      printable: true
+      enabled: false
+
+    # Commission des affaires économiques Sénat — cœur de cible GD
+    # (EGalim, négociations, urbanisme commercial).
+    # À renseigner par Cyril au premier run : URL exacte de la page agenda
+    # de la commission (structure identique à celle utilisée côté culture
+    # sur le projet sport).
+    - id: senat_agenda_affaires_economiques
+      category: agenda
+      url: https://www.senat.fr/travaux-parlementaires/commissions/commission-des-affaires-economiques/agenda-de-la-commission.html
+      format: senat_commission_agenda_html
+      commission_label: Commission des affaires économiques
+      commission_organe: PO78718
+
+    # Commission de l'aménagement du territoire et du développement
+    # durable Sénat — volet urbanisme commercial (CDAC/CNAC, ZAN, friches).
+    - id: senat_agenda_amenagement
+      category: agenda
+      url: https://www.senat.fr/travaux-parlementaires/commissions/commission-de-lamenagement-du-territoire-et-du-developpement-durable/agenda-de-la-commission.html
+      format: senat_commission_agenda_html
+      commission_label: Commission aménagement du territoire et développement durable
+      commission_organe: PO78664
+
+# ============================================================================
+# JOURNAL OFFICIEL — DILA OPENDATA
+# ============================================================================
+dila:
+  sources:
+    - id: dila_jorf
+      category: jorf
+      url: https://echanges.dila.gouv.fr/OPENDATA/JORF/
+      format: dila_jorf
+      days_back: 16
+
+# ============================================================================
+# EXÉCUTIF — Élysée, Matignon
+# ============================================================================
+executif:
+  sources:
+    - id: elysee_feed
+      category: communiques
+      url: https://www.elysee.fr/feed
+      format: rss
+
+    - id: elysee_agenda
+      category: agenda
+      url: https://www.elysee.fr/agenda
+      format: elysee_agenda_html
+
+    - id: info_gouv_actualites
+      category: communiques
+      url: https://www.info.gouv.fr/toute-l-actualite
+      format: html
+      impersonate: true
+      fetch_meta: true
+      fetch_meta_limit: 40
+
+    - id: matignon_actualites
+      category: communiques
+      url: https://www.info.gouv.fr/suivre-l-actualite-du-premier-ministre
+      format: html
+      impersonate: true
+      chamber: Matignon
+      title_prefix: "PM —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+
+# ============================================================================
+# MINISTÈRES — périmètre Lidl resserré
+# ============================================================================
+ministeres:
+  sources:
+    # Économie / Commerce / Consommation — cœur de cible (EGalim, négociations,
+    # DGCCRF, SRP+10)
+    - id: min_economie
+      category: communiques
+      url: https://presse.economie.gouv.fr/
+      format: html
+      impersonate: true
+      chamber: MinEcon
+      title_prefix: "MinEcon —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      poids: 3
+
+    # Agriculture & souveraineté alimentaire — volet EGalim, contrats amont,
+    # matières premières.
+    - id: min_agriculture
+      category: communiques
+      url: https://agriculture.gouv.fr/presse
+      format: html
+      impersonate: true
+      chamber: MinAgri
+      title_prefix: "MinAgri —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      poids: 3
+
+    # Transition écologique — volet loi AGEC, REP emballages, vrac, plastique.
+    - id: min_transition_ecologique
+      category: communiques
+      url: https://www.ecologie.gouv.fr/presse
+      format: html
+      fetch_meta: true
+      fetch_meta_limit: 40
+
+    # Travail — volet travail dominical, convention collective commerce
+    # de détail. La rubrique /actualites/presse était bloquée par F5 ASM
+    # sur l'instance sport ; laissée désactivée, à tenter avec Playwright
+    # si besoin en v2.
+    - id: min_travail
+      category: communiques
+      url: https://travail-emploi.gouv.fr/actualites/presse
+      format: html
+      enabled: false
+
+    # Ministère délégué aux Outre-mer — volet BQP / oligopoles.
+    # URL à vérifier en recette : le portail outre-mer a changé d'arbo
+    # plusieurs fois. Fallback via info.gouv.fr si indispo.
+    - id: min_outremer
+      category: communiques
+      url: https://www.outre-mer.gouv.fr/presse
+      format: html
+      fetch_meta: true
+      fetch_meta_limit: 40
+
+    # Intérieur — marginal (sécurité des grandes surfaces pendant
+    # événements). Désactivé par défaut, à réactiver si pertinent.
+    - id: min_interieur
+      category: communiques
+      url: https://www.interieur.gouv.fr/actualites/presse
+      format: html
+      impersonate: true
+      chamber: MinInterieur
+      title_prefix: "MinInt —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+# ============================================================================
+# AUTORITÉS ADMINISTRATIVES & OPÉRATEURS PUBLICS
+# ============================================================================
+autorites:
+  sources:
+    # Autorité de la concurrence — cœur de cible (avis GMS, fusions).
+    # Scraping HTML déjà en prod sur le projet sport.
+    - id: autorite_concurrence
+      category: communiques
+      url: https://www.autoritedelaconcurrence.fr/fr/communiques-de-presse
+      format: html
+      fetch_meta: true
+      fetch_meta_limit: 40
+      poids: 3
+
+    # DGCCRF — rubrique actualités (communiqués de contrôle, rappels,
+    # rapports annuels). URL stable sur economie.gouv.fr.
+    - id: dgccrf
+      category: communiques
+      url: https://www.economie.gouv.fr/dgccrf/Publications/Actualites-DGCCRF
+      format: html
+      impersonate: true
+      chamber: DGCCRF
+      title_prefix: "DGCCRF —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      poids: 3
+
+    # RappelConso — flux des rappels produits. Fort signal si une
+    # enseigne Lidl/Carrefour/Leclerc est citée. API data.gouv.fr exposée
+    # en JSON + flux RSS public. À confirmer en recette : endpoint RSS
+    # officiel = https://rappel.conso.gouv.fr/feed.
+    - id: rappelconso
+      category: communiques
+      url: https://rappel.conso.gouv.fr/feed
+      format: rss
+      chamber: RappelConso
+      title_prefix: "RappelConso —"
+
+    # Cour des comptes — rapports thématiques (EGalim, GD, outre-mer).
+    # Flux RSS officiel stable.
+    - id: ccomptes_publications
+      category: communiques
+      url: https://www.ccomptes.fr/rss/publications
+      format: rss
+
+    # Conseil d'État — recours CNAC, jurisprudence urbanisme commercial.
+    - id: conseil_etat
+      category: communiques
+      url: https://www.conseil-etat.fr/rss/actualites-rss
+      format: rss
+
+    # Observatoire de la formation des prix et des marges (FranceAgriMer).
+    # Pas de flux dédié identifié — on scrape la page publications.
+    # À désactiver si bruit/silence.
+    - id: ofpm
+      category: communiques
+      url: https://www.franceagrimer.fr/Actualite
+      format: html
+      chamber: OFPM
+      title_prefix: "FranceAgriMer —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # Médiateur des relations commerciales agricoles — bilans de campagne.
+    # URL à vérifier en recette. Désactivé par défaut.
+    - id: mediateur_commercial_agricole
+      category: communiques
+      url: https://mediation-agriculture.agriculture.gouv.fr/
+      format: html
+      chamber: MediateurAgri
+      title_prefix: "Médiateur —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # ADEME — publications emballages / gaspillage alimentaire.
+    - id: ademe_publications
+      category: communiques
+      url: https://librairie.ademe.fr/changement-climatique-et-energie/cat/7/publications-recentes.html
+      format: html
+      chamber: ADEME
+      title_prefix: "ADEME —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
