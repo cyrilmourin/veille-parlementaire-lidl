@@ -318,33 +318,40 @@ theme_negociations:
       - commerce de détail
       - commerce alimentaire
 
+  # Règle Cyril (2026-04-24) : EGalim seul ne valide PAS ces termes —
+  # sinon un texte 'EGalim + agriculteurs' passe sans signal distribution.
+  # On exige grande distribution / négociation commerciale / enseigne.
   - term: Contrats amont
     mode: contextual
     requires_any:
       - grande distribution
       - négociation commerciale
-      - EGalim
+      - distributeur
+      - enseigne
 
   - term: Matière première agricole
     mode: contextual
     requires_any:
       - grande distribution
       - négociation commerciale
-      - EGalim
+      - distributeur
+      - enseigne
 
   - term: Agriculture
     mode: contextual
     requires_any:
       - grande distribution
       - négociation commerciale
-      - EGalim
+      - distributeur
+      - enseigne
 
   - term: Agriculteurs
     mode: contextual
     requires_any:
       - grande distribution
       - négociation commerciale
-      - EGalim
+      - distributeur
+      - enseigne
 
 # ============================================================================
 # THEME — urbanisme commercial, implantation
