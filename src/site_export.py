@@ -846,37 +846,24 @@ _SOURCE_FAMILY_BY_PREFIX = (
     ("elysee_", "gouvernement"),
     ("min_", "gouvernement"),
     ("dila_jorf", "jorf"),
+    # Lidl (2026-04-24) : organisations professionnelles / syndicales.
+    # Préfixe "org_" appliqué aux ids des sources dans config/sources.yml.
+    ("org_", "organisations"),
 )
 _SOURCE_FAMILY_BY_ID = {
     # Autorités administratives indépendantes + hautes juridictions
-    # (R23-O : regroupées dans le bucket "autorites" à la demande de
-    # Cyril, plutôt qu'éclatées AAI vs Juridictions).
-    "anj": "autorites",
-    "arcom": "autorites",
+    # + régulateurs sectoriels (cœur de cible GD : Autorité de la
+    # concurrence, DGCCRF, RappelConso, Cour des comptes, Conseil d'État).
     "autorite_concurrence": "autorites",
+    "ccomptes_publications": "autorites",
+    "conseil_etat": "autorites",
     "conseil_constit_actualites": "autorites",
     "conseil_constit_decisions": "autorites",
-    "conseil_etat": "autorites",
-    "defenseur_droits": "autorites",
-    "ccomptes_publications": "autorites",
-    # R25-F (2026-04-23) : AFLD et IGESR ne sont pas des autorités
-    # indépendantes : AFLD = EPA rattaché au ministère des Sports,
-    # IGESR = inspection interministérielle (service État). Ils vont
-    # désormais dans "operateurs_publics" pour matcher la lecture
-    # métier de Cyril (filtre Publications + Agenda).
-    "afld": "operateurs_publics",
-    "igesr_rapports": "operateurs_publics",
-    # R23-O : opérateurs publics (établissements / services publics
-    # rattachés aux ministères Sports / Jeunesse). Séparés du mouvement
-    # sportif associatif pour donner deux boutons distincts au filtre.
-    "ans": "operateurs_publics",
-    "injep": "operateurs_publics",
-    "insep": "operateurs_publics",
-    # R23-O : mouvement sportif (associations RUP + fondation RUP
-    # adossée au CNOSF). Catégorie séparée des opérateurs publics.
-    "cnosf": "mouvement_sportif",
-    "france_paralympique": "mouvement_sportif",
-    "fdsf": "mouvement_sportif",
+    "dgccrf": "autorites",
+    "rappelconso": "autorites",
+    "ofpm": "autorites",
+    "mediateur_commercial_agricole": "autorites",
+    "ademe_publications": "autorites",
 }
 
 
@@ -2427,16 +2414,15 @@ def _write_category_indexes(items_dir: Path, by_cat: dict[str, list[dict]]):
                 "publications, rapports et communiqués récents."
             )
         elif cat == "jorf":
-            # R36-K : fenêtre 90j + mention explicite "hors nominations"
-            # avec un lien markdown vers la catégorie dédiée.
+            # R36-K : fenêtre 90j.
+            # Lidl : mention « hors nominations » retirée — la catégorie
+            # nominations n'existe plus sur cette instance.
             description = (
-                f"Veille {label.lower()} — {count} textes sur {window_human}, "
-                f"hors nominations."
+                f"Veille {label.lower()} — {count} textes sur {window_human}."
             )
             body_line = (
                 f"{count} texte{'s' if count > 1 else ''} au JO sur les "
-                f"{window_derniers}, **hors nominations** "
-                "([voir la page Nominations](/items/nominations/))."
+                f"{window_derniers}."
             )
         else:
             description = (

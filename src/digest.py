@@ -28,7 +28,9 @@ CATEGORY_LABELS = {
     # dans les sommaires pliables du site. Les items gardent category="jorf"
     # côté DB, c'est uniquement un libellé d'affichage.
     "jorf": "Journal Officiel",
-    "nominations": "Nominations",
+    # Note Lidl (2026-04-24) : catégorie "nominations" retirée — peu
+    # d'intérêt sur le compte Lidl, et les rares nominations pertinentes
+    # (ex. dirigeant GD) remonteront via la catégorie JORF standard.
     "communiques": "Publications",
 }
 

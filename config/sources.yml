@@ -378,3 +378,151 @@ autorites:
       fetch_meta: true
       fetch_meta_limit: 40
       enabled: false
+
+# ============================================================================
+# ORGANISATIONS REPRÉSENTATIVES — syndicats patronaux et professionnels
+# ============================================================================
+# Filtre UI regroupé sous "Organisations représentatives" via le préfixe
+# `org_` (cf. _SOURCE_FAMILY_BY_PREFIX côté site_export). URLs best-effort
+# à valider à la recette ; toutes désactivées par défaut en attendant.
+organisations:
+  sources:
+    # FCD — Fédération du Commerce et de la Distribution (patronale GD).
+    # Cœur de cible : position officielle des enseignes sur EGalim,
+    # SRP+10, négociations commerciales.
+    - id: org_fcd
+      category: communiques
+      url: https://www.fcd.fr/espace-presse/
+      format: html
+      chamber: FCD
+      title_prefix: "FCD —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # ANIA — Association Nationale des Industries Alimentaires
+    # (industriels fournisseurs de la GD).
+    - id: org_ania
+      category: communiques
+      url: https://www.ania.net/communiques-presse
+      format: html
+      chamber: ANIA
+      title_prefix: "ANIA —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # FNSEA — syndicat agricole majoritaire. Cœur EGalim côté amont.
+    - id: org_fnsea
+      category: communiques
+      url: https://www.fnsea.fr/communiques/
+      format: html
+      chamber: FNSEA
+      title_prefix: "FNSEA —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # APCA — Chambres d'agriculture (Assemblée permanente).
+    - id: org_apca
+      category: communiques
+      url: https://chambres-agriculture.fr/presse-et-publications/communiques-de-presse/
+      format: html
+      chamber: APCA
+      title_prefix: "APCA —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # Coordination rurale — 2e syndicat agricole, souvent critique des GMS.
+    - id: org_coordination_rurale
+      category: communiques
+      url: https://www.coordinationrurale.fr/communiques/
+      format: html
+      chamber: CoordinationRurale
+      title_prefix: "Coord. rurale —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # Confédération paysanne — 3e syndicat, volet distribution / contrats.
+    - id: org_confederation_paysanne
+      category: communiques
+      url: https://www.confederationpaysanne.fr/presse.php
+      format: html
+      chamber: ConfPaysanne
+      title_prefix: "Conf. paysanne —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # Jeunes Agriculteurs — positions sur installation et contrats GD.
+    - id: org_jeunes_agriculteurs
+      category: communiques
+      url: https://jeunes-agriculteurs.fr/espace-presse/
+      format: html
+      chamber: JeunesAgri
+      title_prefix: "JA —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # UFC-Que Choisir — association consommateurs, observateur prix / étiquetage.
+    - id: org_ufc
+      category: communiques
+      url: https://www.quechoisir.org/communiques-presse-r64/
+      format: html
+      chamber: UFC
+      title_prefix: "UFC —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+    # Foodwatch France — ONG ciblant l'industrie et la GD alimentaire.
+    - id: org_foodwatch
+      category: communiques
+      url: https://www.foodwatch.org/fr/presse/communiques-de-presse/
+      format: html
+      chamber: Foodwatch
+      title_prefix: "Foodwatch —"
+      fetch_meta: true
+      fetch_meta_limit: 40
+      enabled: false
+
+# ============================================================================
+# AGENDAS MINISTRES — à activer à la recette
+# ============================================================================
+# Les agendas ministériels ne sont pas tous exposés en dataset ; quand un
+# dataset data.gouv.fr existe (cf. instance sport pour Éduc / ESR), on
+# utilise le format data_gouv_agenda. Sinon scraping best-effort.
+ministeres_agendas:
+  sources:
+    # Agenda ministre Agriculture — format data.gouv.fr à vérifier.
+    - id: min_agriculture_agenda
+      category: agenda
+      url: https://www.data.gouv.fr/fr/datasets/agenda-du-ministre-de-l-agriculture/
+      format: data_gouv_agenda
+      chamber: MinAgri
+      title_prefix: "MinAgri —"
+      since_days: 90
+      enabled: false
+
+    # Agenda ministre Économie / Bercy.
+    - id: min_economie_agenda
+      category: agenda
+      url: https://www.data.gouv.fr/fr/datasets/agenda-du-ministre-de-leconomie-et-des-finances/
+      format: data_gouv_agenda
+      chamber: MinEcon
+      title_prefix: "MinEcon —"
+      since_days: 90
+      enabled: false
+
+    # Agenda ministre délégué Commerce / PME / artisanat / tourisme.
+    - id: min_commerce_agenda
+      category: agenda
+      url: https://www.data.gouv.fr/fr/datasets/agenda-du-ministre-delegue-aux-pme-commerce-artisanat/
+      format: data_gouv_agenda
+      chamber: MinCommerce
+      title_prefix: "MinCommerce —"
+      since_days: 90
+      enabled: false
