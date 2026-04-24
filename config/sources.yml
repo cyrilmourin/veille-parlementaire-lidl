@@ -424,65 +424,66 @@ organisations:
     # FCD — Fédération du Commerce et de la Distribution (patronale GD).
     # Cœur de cible : position officielle des enseignes sur EGalim,
     # SRP+10, négociations commerciales.
+    # Flux : pas de RSS exposé. La page /presse/ répond 200 (36 Ko).
+    # Les articles détaillés vivent sous /qui-sommes-nous/actualites-de-la-fcd/.
+    # Vérifié live 2026-04-24 (HTTP 200, 36 Ko).
     - id: org_fcd
       category: communiques
-      url: https://www.fcd.fr/espace-presse/
+      url: https://www.fcd.fr/presse/
       format: html
       chamber: FCD
       title_prefix: "FCD —"
       fetch_meta: true
       fetch_meta_limit: 40
-      enabled: false
 
     # ANIA — Association Nationale des Industries Alimentaires
-    # (industriels fournisseurs de la GD).
+    # (industriels fournisseurs de la GD). Flux RSS WordPress officiel.
+    # Vérifié live 2026-04-24 (HTTP 200, application/rss+xml).
     - id: org_ania
       category: communiques
-      url: https://www.ania.net/communiques-presse
-      format: html
+      url: https://www.ania.net/feed/
+      format: rss
       chamber: ANIA
       title_prefix: "ANIA —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
 
     # FNSEA — syndicat agricole majoritaire. Cœur EGalim côté amont.
+    # Flux RSS WordPress officiel. Vérifié live 2026-04-24 (HTTP 200, RSS).
     - id: org_fnsea
       category: communiques
-      url: https://www.fnsea.fr/communiques/
-      format: html
+      url: https://www.fnsea.fr/feed/
+      format: rss
       chamber: FNSEA
       title_prefix: "FNSEA —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
 
     # APCA — Chambres d'agriculture (Assemblée permanente).
+    # Pas de RSS exposé. Scraping /espace-presse (TYPO3, 99 Ko).
+    # Vérifié live 2026-04-24 (HTTP 200).
     - id: org_apca
       category: communiques
-      url: https://chambres-agriculture.fr/presse-et-publications/communiques-de-presse/
+      url: https://chambres-agriculture.fr/espace-presse
       format: html
       chamber: APCA
       title_prefix: "APCA —"
       fetch_meta: true
       fetch_meta_limit: 40
-      enabled: false
 
     # Coordination rurale — 2e syndicat agricole, souvent critique des GMS.
+    # Flux RSS WordPress (/feed). Vérifié live 2026-04-24 (HTTP 200, 220 Ko).
     - id: org_coordination_rurale
       category: communiques
-      url: https://www.coordinationrurale.fr/communiques/
-      format: html
+      url: https://www.coordinationrurale.fr/feed
+      format: rss
       chamber: CoordinationRurale
       title_prefix: "Coord. rurale —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
 
     # Confédération paysanne — 3e syndicat, volet distribution / contrats.
+    # Pas de flux RSS identifié ; home contient des liens actu.php?id=N.
+    # Scraping générique de la home (56 Ko). Enabled false pour la v1 :
+    # le listing n'est pas stable, on laissera Cyril activer après
+    # audit manuel du rendu.
     - id: org_confederation_paysanne
       category: communiques
-      url: https://www.confederationpaysanne.fr/presse.php
+      url: https://www.confederationpaysanne.fr/
       format: html
       chamber: ConfPaysanne
       title_prefix: "Conf. paysanne —"
@@ -491,28 +492,28 @@ organisations:
       enabled: false
 
     # Jeunes Agriculteurs — positions sur installation et contrats GD.
+    # Flux RSS WordPress (/feed sans slash — avec slash = 301).
+    # Vérifié live 2026-04-24 (HTTP 200, RSS).
     - id: org_jeunes_agriculteurs
       category: communiques
-      url: https://jeunes-agriculteurs.fr/espace-presse/
-      format: html
+      url: https://jeunes-agriculteurs.fr/feed
+      format: rss
       chamber: JeunesAgri
       title_prefix: "JA —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
 
-    # UFC-Que Choisir — association consommateurs, observateur prix / étiquetage.
+    # UFC-Que Choisir — association consommateurs, observateur prix /
+    # étiquetage. Flux RSS officiel déclaré en <link rel=alternate> sur
+    # /salle-de-presse/. Vérifié live 2026-04-24.
     - id: org_ufc
       category: communiques
-      url: https://www.quechoisir.org/communiques-presse-r64/
-      format: html
+      url: https://www.quechoisir.org/utils/flux
+      format: rss
       chamber: UFC
       title_prefix: "UFC —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
 
     # Foodwatch France — ONG ciblant l'industrie et la GD alimentaire.
+    # Pas de RSS exposé (404 sur /rss). Scraping /fr/presse/communiques-
+    # de-presse/ (TYPO3, 200 OK).
     - id: org_foodwatch
       category: communiques
       url: https://www.foodwatch.org/fr/presse/communiques-de-presse/
@@ -521,7 +522,6 @@ organisations:
       title_prefix: "Foodwatch —"
       fetch_meta: true
       fetch_meta_limit: 40
-      enabled: false
 
 # ============================================================================
 # AGENDAS MINISTRES — à activer à la recette
