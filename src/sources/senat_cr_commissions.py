@@ -68,18 +68,25 @@ _BREADCRUMB_END_RE = re.compile(
     re.IGNORECASE,
 )
 
-# R39-E (2026-04-25) : la ligne « COMPTES RENDUS DE LA COMMISSION DES
-# AFFAIRES ÉCONOMIQUES » s'affichait en tête d'extrait — bruit visuel
-# inutile. On coupe cette ligne d'entête, ainsi que les sous-titres en
-# majuscules (« Mardi 14 avril 2026 »), pour aller direct au contenu
-# (« Mission d'information sur… », « Audition de M. … »). On capte
-# tout préambule en MAJUSCULES jusqu'au premier mot de contenu en
-# casse normale.
+# R39-E / R39-I bis (2026-04-25) : la ligne « COMPTES RENDUS DE LA
+# COMMISSION DES AFFAIRES ÉCONOMIQUES » s'affichait en tête d'extrait —
+# bruit visuel inutile. On coupe cette ligne d'entête, ainsi que les
+# sous-titres en majuscules (« Mardi 14 avril 2026 »), pour aller direct
+# au contenu (« Mission d'information sur… », « Audition de M. … »).
+#
+# La character class inclut explicitement tous les caractères latin
+# majuscules courants (À-Ü, Ç, Œ, Æ, Ñ, Ÿ) et les apostrophes ASCII et
+# typographique. Ne PAS oublier l'apostrophe ASCII `'` qui apparaît dans
+# « COMMISSION DE L'AMÉNAGEMENT… » : sans elle dans la class, le pattern
+# coupait à L et le préambule restait visible. Le tiret `-` est en fin
+# de class pour ne pas être interprété comme range.
 _SENAT_HEADER_RE = re.compile(
-    r"COMPTES\s+RENDUS\s+DE\s+LA\s+COMMISSION\s+(?:DE\s+L'\s*|DES\s+|DE\s+LA\s+|DU\s+)?[A-ZÀÉÈÊÎÔÛÇ\s,'’\-]{3,300}?"
+    r"COMPTES\s+RENDUS\s+DE\s+LA\s+COMMISSION\s+"
+    r"(?:DE\s+L['’]?\s*|DES\s+|DE\s+LA\s+|DU\s+)?"
+    r"[A-ZÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝŸÑŒÆ\s,.'’()\-]{3,400}?"
     r"(?=\s+(?:Mardi|Mercredi|Jeudi|Vendredi|Lundi|Samedi|Dimanche|"
     r"Présidence|Mission|Audition|Examen|Communication|Table|Réunion|"
-    r"Constitution|Désignation)\s)",
+    r"Constitution|Désignation|Discussion|Suite)\b)",
     re.IGNORECASE,
 )
 
