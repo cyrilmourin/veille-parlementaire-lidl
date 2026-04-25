@@ -134,25 +134,35 @@ senat:
       format: senat_amendements
       since_days: 30
 
+    # 2026-04-25 : URLs questions Sénat aussi migrées (même hist. P2 dosleg).
+    # Anciennes URLs `.csv.zip` toutes en 404. Vérifié live :
+    #   - questions.zip          : 279 Mo (ZIP des CSV historiques)
+    #   - qg.csv                 : 2 Mo (CSV direct, latin-1, sep=;)
+    #   - questions-depuis-un-an : 1.8 Mo (CSV direct)
     - id: senat_questions
       category: questions
-      url: https://data.senat.fr/data/questions/questions.csv.zip
+      url: https://data.senat.fr/data/questions/questions.zip
       format: csv_zip
 
     - id: senat_qg
       category: questions
-      url: https://data.senat.fr/data/questions/qg.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/questions/qg.csv
+      format: csv
 
     - id: senat_questions_1an
       category: questions
-      url: https://data.senat.fr/data/questions/questions-1an.csv.zip
-      format: csv_zip
+      url: https://data.senat.fr/data/questions/questions-depuis-un-an.csv
+      format: csv
 
+    # senat_debats désactivé : le CSV `debats.csv.zip` puis `debats.csv`
+    # renvoient 404 et la page d'accueil de la base ne liste plus
+    # d'équivalent (vérif live 2026-04-25). La couverture des séances
+    # plénières Sénat passe par senat_cri (cri.zip) qui répond toujours.
     - id: senat_debats
       category: comptes_rendus
       url: https://data.senat.fr/data/debats/debats.csv.zip
       format: csv_zip
+      enabled: false
 
     - id: senat_cri
       category: comptes_rendus
