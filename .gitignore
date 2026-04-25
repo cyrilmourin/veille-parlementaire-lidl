@@ -36,8 +36,10 @@ data/last_digest.html
 # Miroirs docs externes (schémas AN)
 references/
 
-# Artefacts héritages de l'instance sport (ne pas versionner sur Lidl)
-HANDOFF.md
+# Artefacts hérités de l'instance sport (ne pas versionner sur Lidl).
+# Note 2026-04-25 : HANDOFF.md est désormais versionné sur Lidl (document
+# de passage de main entre sessions, structure repensée pour le compte
+# Lidl) — retiré du gitignore.
 ROLLBACK.md
 docs/
 

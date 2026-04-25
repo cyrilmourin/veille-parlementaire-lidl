@@ -13,58 +13,65 @@
 # ============================================================================
 # PARLEMENT — Assemblée nationale
 # ============================================================================
+# P7 (2026-04-25) — URLs agnostiques à la législature. Le placeholder
+# {legislature} est remplacé au runtime par le numéro de chaque législature
+# active dans la fenêtre demandée (cf. src/legislatures.py). Une source
+# avec `url_template` est expansée en N sources concrètes (une par
+# législature), avec un id suffixé `_l17`, `_l16`, etc. À la bascule
+# 17→18, il suffira d'ajouter Legislature(18, ...) dans src/legislatures.py :
+# aucun changement ici.
 assemblee_nationale:
-  base: https://data.assemblee-nationale.fr/static/openData/repository/17
+  base_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}
   sources:
     - id: an_dossiers_legislatifs
       category: dossiers_legislatifs
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/loi/dossiers_legislatifs/Dossiers_Legislatifs.json.zip
       format: json_zip
 
     - id: an_amendements
       category: amendements
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/loi/amendements_div_legis/Amendements.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/loi/amendements_div_legis/Amendements.json.zip
       format: json_zip
       since_days: 30
 
     - id: an_questions_ecrites
       category: questions
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_ecrites/Questions_ecrites.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/questions/questions_ecrites/Questions_ecrites.json.zip
       format: json_zip
       since_days: 30
 
     - id: an_questions_gouvernement
       category: questions
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_gouvernement/Questions_gouvernement.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/questions/questions_gouvernement/Questions_gouvernement.json.zip
       format: json_zip
       since_days: 30
 
     - id: an_questions_orales_sans_debat
       category: questions
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/questions/questions_orales_sans_debat/Questions_orales_sans_debat.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/questions/questions_orales_sans_debat/Questions_orales_sans_debat.json.zip
       format: json_zip
       since_days: 30
 
     - id: an_agenda
       category: agenda
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/vp/reunions/Agenda.json.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/vp/reunions/Agenda.json.zip
       format: json_zip
       since_days: 30
 
     - id: an_syceron
       category: comptes_rendus
-      url: https://data.assemblee-nationale.fr/static/openData/repository/17/vp/syceronbrut/syseron.xml.zip
+      url_template: https://data.assemblee-nationale.fr/static/openData/repository/{legislature}/vp/syceronbrut/syseron.xml.zip
       format: xml_zip
       since_days: 30
 
     - id: an_rapports
       category: communiques
-      url: https://www2.assemblee-nationale.fr/documents/liste?type=rapports&legis=17
+      url_template: https://www2.assemblee-nationale.fr/documents/liste?type=rapports&legis={legislature}
       format: an_rapports_html
 
     - id: an_cr_commissions
       category: comptes_rendus
-      url: https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/
+      url_template: https://www.assemblee-nationale.fr/dyn/{legislature}/comptes-rendus/
       format: an_cr_commissions
       max_new_per_run: 10
       # miss_tolerance élevé pour le premier run : sans state, on part

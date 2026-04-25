@@ -109,13 +109,53 @@ def _dispatch(group: str, src: dict) -> Callable[[dict], list[Item]]:
     return html_generic.fetch_source
 
 
-def iter_sources(config: dict):
+def _expand_legislature_templates(src: dict, since_days: int) -> list[dict]:
+    """P7 (2026-04-25) — expanse une source avec `url_template` en N sources
+    concrètes (une par législature active dans la fenêtre `since_days`).
+
+    Si la source n'a pas `url_template`, retourne [src] tel quel.
+    Sinon, pour chaque numéro de législature renvoyé par
+    `active_legislatures(since_days)`, produit un dict copié avec :
+      - `url` = url_template.replace('{legislature}', str(num))
+      - `id`  = <id>_l<num>  (pour rester unique sur les stats et state files)
+      - on retire `url_template` (pas utile en aval)
+    """
+    if "url_template" not in src:
+        return [src]
+    tmpl = src["url_template"]
+    # Import local pour ne pas alourdir le haut du module.
+    from .legislatures import active_legislatures
+    legs = active_legislatures(max(since_days, 30))
+    if not legs:
+        # Sécurité — ne devrait jamais arriver (au minimum la courante)
+        from .legislatures import current_legislature
+        legs = [current_legislature()]
+    expanded: list[dict] = []
+    for num in legs:
+        copy = dict(src)
+        copy["url"] = tmpl.replace("{legislature}", str(num))
+        copy.pop("url_template", None)
+        # Un seul suffixe quand 1 seule législature active : on reste
+        # compatible avec les ids historiques (an_dossiers_legislatifs
+        # sans suffixe), pour ne pas casser les stats existantes, les
+        # states `data/an_cr_state.json`, etc.
+        if len(legs) > 1:
+            copy["id"] = f"{src['id']}_l{num}"
+        expanded.append(copy)
+    return expanded
+
+
+def iter_sources(config: dict, since_days: int = 30):
     """Itère sur (group_name, source_dict) pour chaque source du YAML.
 
     Une source peut être désactivée temporairement avec `enabled: false`
     dans son entrée YAML (ex. domaine cassé, Cloudflare challenge insoluble,
     timeout connect chronique). Elle est alors silencieusement skippée par
     la pipeline — utile pour stop-loss sans supprimer la conf.
+
+    P7 (2026-04-25) : les sources avec `url_template` sont expansées en
+    N sources concrètes, une par législature active dans la fenêtre
+    `since_days`.
     """
     for group_name, group in config.items():
         if not isinstance(group, dict):
@@ -125,7 +165,8 @@ def iter_sources(config: dict):
             if src.get("enabled") is False:
                 log.info("Source %s désactivée (enabled: false), skip", src.get("id", "?"))
                 continue
-            yield group_name, src
+            for expanded in _expand_legislature_templates(src, since_days):
+                yield group_name, expanded
 
 
 def _fetch_one(group: str, src: dict) -> tuple[str, list[Item], str | None]:
@@ -152,7 +193,14 @@ def run_all(config_path: str | Path, parallel: int = 6,
                 continue
             for src in group.get("sources") or []:
                 src["since_days"] = since_days_override
-    jobs = list(iter_sources(cfg))
+    # P7 : fenêtre utilisée pour calculer les législatures actives.
+    # Par défaut (30 j) on ne charge que la législature en cours — accord
+    # Cyril 2026-04-25 : « Pas indispensable d'aller au-delà de la 16e ».
+    # L'override large (catch-up Lidl 540 j, ou reset_db ciblant 3 ans)
+    # active automatiquement la législature précédente pendant la fenêtre
+    # de chevauchement post-bascule.
+    leg_window = since_days_override if since_days_override is not None else 30
+    jobs = list(iter_sources(cfg, since_days=leg_window))
     log.info("Pipeline : %d sources à interroger", len(jobs))
     all_items: list[Item] = []
     stats: dict[str, dict] = {}
