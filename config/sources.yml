@@ -128,10 +128,17 @@ senat:
       url: https://data.senat.fr/data/dosleg/promulguees.csv
       format: csv
 
+    # 2026-04-25 : fix critique. Le routeur senat.py::fetch_source attend
+    # format=akn_discussion pour appeler senat_amendements.fetch_source.
+    # La config Lidl avait format=senat_amendements (mauvais nom) → la
+    # fonction n'était JAMAIS appelée, 0 amendement Sénat depuis la mise
+    # en prod (silencieux car tolérance 0-items côté pipeline).
+    # url ignorée par ce parser custom (il itère sur akomantoso/depots.xml
+    # et fetche les CSV unitaires per-texte sur senat.fr).
     - id: senat_amendements
       category: amendements
-      url: https://data.senat.fr/amendements/
-      format: senat_amendements
+      url: https://www.senat.fr/akomantoso/depots.xml
+      format: akn_discussion
       since_days: 30
 
     # 2026-04-25 : URLs questions Sénat aussi migrées (même hist. P2 dosleg).
