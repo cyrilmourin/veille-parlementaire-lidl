@@ -52,8 +52,27 @@ MAX_HAYSTACK_CHARS = 15_000
 MAX_TEXTES_PER_DOSSIER = 2
 MAX_RAPPORTS_PER_DOSSIER = 2
 
-# Rate limiting : pause entre requêtes AN pour rester courtois.
-_REQUEST_DELAY_S = 0.3
+# Rate limiting : pause entre requêtes AN. Réduit de 300 ms à 100 ms
+# (2026-04-25) pour ne pas plomber le cold-start. À 300 ms, 5 400 fetches
+# = 27 min de pause pure → timeout du workflow GitHub Actions.
+_REQUEST_DELAY_S = 0.1
+
+# Budget de fetches PDF par run (cold-start étalé). 700 fetches × ~250 ms
+# = ~3 min net + parsing → reste largement sous le timeout 25 min même
+# avec le reste de la pipeline. Couvre ~175 dossiers par run au pire
+# (4 PDF/dossier). Avec ~1300 dossiers à traiter au total, tout sera
+# en cache en ~7-8 runs (≈ 1 semaine de daily). Les dossiers non
+# traités ce run ne sont PAS cachés vides → ils seront retentés au run
+# suivant.
+_FETCH_BUDGET_PER_RUN = 700
+_fetch_count = 0
+
+
+def reset_fetch_budget() -> None:
+    """Remet le compteur à zéro (utile en tests). Pas appelé en prod —
+    le module se recharge à chaque process worker."""
+    global _fetch_count
+    _fetch_count = 0
 
 # Pattern des liens internes du dossier :
 #   /dyn/17/textes/l17b<NUM>_<type>          → texte parlementaire
@@ -170,8 +189,11 @@ def fetch_pdf_haystack(uid: str, *, use_cache: bool = True) -> str:
     - Scrape la page dossier pour trouver les liens de textes et rapports.
     - Télécharge les PDF (max 2 textes + 2 rapports), extrait le texte,
       concatène et tronque à MAX_HAYSTACK_CHARS.
+    - Budget _FETCH_BUDGET_PER_RUN : si épuisé, retourne "" SANS cacher
+      pour retenter au prochain run (cold-start étalé sur ~7-8 runs).
     - En cas d'échec à n'importe quelle étape : retourne "" et cache vide.
     """
+    global _fetch_count
     if not uid:
         return ""
     if use_cache:
@@ -179,8 +201,15 @@ def fetch_pdf_haystack(uid: str, *, use_cache: bool = True) -> str:
         if cached is not None:
             return cached
 
+    # Budget épuisé pour ce run : on n'écrit PAS de cache vide pour que
+    # le dossier soit retenté au run suivant. Coût : 1 lookup cache disque
+    # par dossier non-traité (négligeable).
+    if _fetch_count >= _FETCH_BUDGET_PER_RUN:
+        return ""
+
     url = _DOSSIER_URL.format(uid=uid)
     try:
+        _fetch_count += 1
         html_bytes = fetch_bytes(url, impersonate=True)
         html = html_bytes.decode("utf-8", errors="ignore") if html_bytes else ""
     except Exception as e:
@@ -198,16 +227,27 @@ def fetch_pdf_haystack(uid: str, *, use_cache: bool = True) -> str:
 
     parts: list[str] = []
     for path in textes[:MAX_TEXTES_PER_DOSSIER]:
+        if _fetch_count >= _FETCH_BUDGET_PER_RUN:
+            break
         time.sleep(_REQUEST_DELAY_S)
+        _fetch_count += 1
         t = _fetch_pdf_text(path, f"{uid}:{path}")
         if t:
             parts.append(t)
     for path in rapports[:MAX_RAPPORTS_PER_DOSSIER]:
+        if _fetch_count >= _FETCH_BUDGET_PER_RUN:
+            break
         time.sleep(_REQUEST_DELAY_S)
+        _fetch_count += 1
         t = _fetch_pdf_text(path, f"{uid}:{path}")
         if t:
             parts.append(t)
 
     haystack = " · ".join(parts)[:MAX_HAYSTACK_CHARS]
+    # Cache même un haystack partiel (textes uniquement, rapports skipés
+    # par budget). Au prochain run, on relit ce cache et le dossier est
+    # déjà couvert — pas besoin de re-fetcher les rapports manquants.
+    # Compromis : un dossier partiellement chargé ne bénéficiera pas des
+    # rapports tant qu'on ne fait pas un reset_category=dossiers.
     _save_cache(uid, haystack)
     return haystack
