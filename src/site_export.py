@@ -773,9 +773,6 @@ def _enrich_senat_question_photo(r: dict, cache: dict[str, tuple[str, str]]) -> 
     raw = r.get("raw") if isinstance(r.get("raw"), dict) else None
     if not isinstance(raw, dict):
         return
-    # Déjà enrichi (par amo_loader ou run précédent) : ne rien faire.
-    if (raw.get("auteur_photo_url") or "").strip():
-        return
     # Reconstruit le nom depuis les colonnes CSV Sénat si dispo, sinon
     # tombe sur raw["auteur"].
     civ = (raw.get("Civilité") or raw.get("civilite") or "").strip()
@@ -783,6 +780,22 @@ def _enrich_senat_question_photo(r: dict, cache: dict[str, tuple[str, str]]) -> 
     nom = (raw.get("Nom") or raw.get("nom") or "").strip()
     full = (raw.get("auteur") or "").strip()
     candidate = " ".join(p for p in [civ, prenom, nom] if p).strip() or full
+    # R39-D (2026-04-25) — backfill des clés minuscules `auteur` / `groupe`
+    # pour les items Sénat questions ingérés AVANT le port R39-D côté
+    # parseur. Sans ces clés minuscules, le frontmatter Hugo ne pose
+    # pas `auteur:` ni `auteur_groupe:` (la chip de groupe restait
+    # vide côté Sénat). Idempotent.
+    if candidate and not raw.get("auteur"):
+        raw["auteur"] = candidate
+    if not raw.get("groupe"):
+        groupe_csv = (raw.get("Groupe") or "").strip()
+        if groupe_csv:
+            raw["groupe"] = groupe_csv
+    # Déjà enrichi avec une photo : on sort APRÈS avoir posé les clés
+    # minuscules pour que le backfill auteur/groupe couvre aussi les
+    # items qui ont déjà une photo mais pas les clés minuscules.
+    if (raw.get("auteur_photo_url") or "").strip():
+        return
     key = _normalize_auteur_name_senat(candidate)
     if not key:
         return
@@ -2690,13 +2703,24 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
         # parlement | gouvernement | autorites | operateurs | jorf
         # (fallback "autres"). cf. _source_family().
         family_source = _source_family(r.get("source_id"), r.get("chamber"))
+        # R39-G (2026-04-25) : on retire les pseudo-keywords techniques
+        # `(organe sport/JOP)` (R27 bypass) et `(flux complet)` (R25-H
+        # bypass) du frontmatter Hugo. Ils sont nécessaires côté store
+        # pour passer le filtre `matched_keywords != []` mais ne sont
+        # pas des keywords thématiques — ils remontaient comme chips
+        # parasites sur les cards UI. Convention : tout matched_keyword
+        # commençant par '(' est un marqueur interne, exclu de l'UI.
+        public_keywords = [
+            k for k in (r.get("matched_keywords") or [])
+            if not (isinstance(k, str) and k.startswith("("))
+        ]
         fm += [
             f"category: {cat}",
             f'chamber: "{r.get("chamber") or ""}"',
             f'source: "{r.get("source_id") or ""}"',
             f'family_source: "{family_source}"',
             f'source_url: "{source_url}"',
-            f"keywords: {json.dumps(r.get('matched_keywords') or [], ensure_ascii=False)}",
+            f"keywords: {json.dumps(public_keywords, ensure_ascii=False)}",
             f"families: {json.dumps(r.get('keyword_families') or [], ensure_ascii=False)}",
             f'snippet: "{snippet}"',
             f'status_label: "{status_label}"',

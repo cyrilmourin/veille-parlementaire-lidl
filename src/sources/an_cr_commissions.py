@@ -121,6 +121,13 @@ def _extract_pdf_text(pdf_bytes: bytes, max_chars: int = 10000) -> str:
 
     Si pypdf indisponible (dépendance non installée), renvoie "" sans
     planter — le matcher retombe alors sur le titre du CR seul.
+
+    R39-E (2026-04-25) : nettoyage du préambule institutionnel des CR AN
+    (« 1 7 e L É G I S L A T U R E A S S E M B L É E N A T I O N A L E
+    Compte rendu Commission des affaires économiques – Examen… »).
+    PyPDF extrait les titres de page avec espacement caractère par
+    caractère, bruit visible en début d'extrait. On coupe avant le
+    premier mot de contenu réel.
     """
     try:
         from pypdf import PdfReader  # type: ignore
@@ -146,7 +153,51 @@ def _extract_pdf_text(pdf_bytes: bytes, max_chars: int = 10000) -> str:
         if total >= max_chars:
             break
     merged = re.sub(r"\s+", " ", " ".join(out)).strip()
+    merged = _strip_an_pdf_preamble(merged)
     return merged[:max_chars]
+
+
+# R39-E (2026-04-25) — détection du préambule institutionnel des CR AN PDF.
+# PyPDF rend les titres de page sous la forme « 1 7 e L É G I S L A T U R E
+# A S S E M B L É E N A T I O N A L E Compte rendu Commission des
+# affaires économiques – Examen… ». On reconnaît le début du préambule
+# (séquence avec « LÉGISLATURE » lettre par lettre), puis on cherche le
+# premier verbe de contenu pour couper.
+#
+# Approche : pattern simple sur le DÉBUT de string (« d-d-e LÉGISLATURE
+# … Compte rendu Commission ») pour vérifier qu'on a bien un préambule,
+# puis on coupe à la première occurrence d'un verbe d'examen/audition.
+_AN_PREAMBLE_START_RE = re.compile(
+    r"^\s*\d\s*\d?\s*e\s+L\s*[EÉ]\s*G\s*I\s*S\s*L\s*A\s*T\s*U\s*R\s*E\s+"
+    r"A\s*S\s*S\s*E\s*M\s*B\s*L\s*[EÉ]\s*E\s+N\s*A\s*T\s*I\s*O\s*N\s*A\s*L\s*E\s+"
+    r"Compte\s+rendu\s+Commission",
+    re.IGNORECASE,
+)
+# Mots-clés qui marquent le début du contenu réel (premier verbe).
+_AN_CONTENT_START_RE = re.compile(
+    r"\b(Examen|Audition|Mission|Communication|Table|Présidence|"
+    r"Réunion|Constitution|Désignation|Discussion|Suite)\b",
+)
+
+
+def _strip_an_pdf_preamble(text: str) -> str:
+    """Retire l'entête institutionnelle des CR AN extraits via pypdf.
+
+    Idempotent : si le préambule n'est pas détecté ou si aucun verbe de
+    contenu n'est trouvé après, retourne le texte inchangé.
+    """
+    if not text:
+        return text
+    if _AN_PREAMBLE_START_RE.match(text) is None:
+        return text
+    # Préambule détecté : on cherche le premier verbe de contenu et on
+    # coupe AVANT.
+    m = _AN_CONTENT_START_RE.search(text)
+    if m is None or m.start() < 50:
+        # Pas de verbe de contenu dans une zone plausible — on garde le
+        # texte tel quel.
+        return text
+    return text[m.start():].strip()
 
 
 def _parse_title(html_text: str, commission_label: str, num: int) -> str:

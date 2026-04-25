@@ -602,6 +602,15 @@ def _normalize_rows(src: dict, rows: list[dict], csv_name: str = "") -> Iterable
             # corps dans la colonne "Texte".
             if texte:
                 r["texte_question"] = texte
+            # R39-D (2026-04-25) : clés minuscules `auteur` / `groupe` posées
+            # ici (mêmes noms que les parseurs AN). site_export lit
+            # `raw["auteur"]` / `raw["groupe"]` pour construire le frontmatter
+            # et la chip de groupe (DEM, SOC, UC, SER, LFI…). Sans ce port,
+            # la chip restait vide côté Sénat (visible côté AN seulement).
+            if auteur:
+                r["auteur"] = auteur
+            if groupe:
+                r["groupe"] = groupe
             yield Item(
                 source_id=sid, uid=str(uid), category=cat, chamber="Senat",
                 title=" ".join(title_bits)[:220],
