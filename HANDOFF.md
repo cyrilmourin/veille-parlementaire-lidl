@@ -20,7 +20,7 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 - Parlement : AN (dumps JSON opendata, législature 17), Sénat (Akoma Ntoso depots/adoptions + 3 commissions CR hebdo : affaires économiques, aménagement du territoire, affaires sociales).
 - Gouvernement : Élysée, Matignon (info.gouv), MinEcon, MinAgri, MinTransitionÉcologique, MinOutre-mer.
 - Autorités : Autorité de la concurrence, Cour des comptes, Conseil d'État, DGCCRF, RappelConso, OFPM, Médiateur agricole (désactivés par défaut en attendant vérif URLs), ADEME (désactivé).
-- Organisations représentatives : ANIA, FNSEA, Coordination rurale, Jeunes Agriculteurs, UFC-Que Choisir (RSS officiels) + FCD, APCA, Foodwatch (HTML scraping). Confédération paysanne désactivée (pas de RSS, listing non-structuré).
+- Organisations représentatives : ANIA, FNSEA, Coordination rurale, Jeunes Agriculteurs, UFC-Que Choisir (RSS officiels) + FCD, APCA, Foodwatch (HTML scraping) + Confédération paysanne (parser dédié, listing `recherche.php?type=RP`).
 - JORF : DILA OPENDATA.
 
 ### Lexique
@@ -55,7 +55,8 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 
 ### Matching contextuel
 
-- **Règle générale** : pour les termes ambigus, le `requires_any` se limite à des signaux **distinctifs** (nom d'enseigne, Bompard, E.Leclerc, Galec…). On évite `grande distribution` seule ou `enseigne` seule dans les `requires_any` car, sur un long haystack JORF ou `libelles_haystack`, la simple co-occurrence distante produit du bruit. *Pourquoi* : diagnostic confirmé par l'utilisateur (« char Leclerc » qui remontait via co-occurrence distante avec « grande distribution »).
+- **Règle générale** : pour les termes ambigus, le `requires_any` se limite à des signaux **distinctifs** (nom d'enseigne, Bompard, E.Leclerc, Galec…). On évite les MOTS COURTS et ambigus seuls (`distributeur`, `enseigne`, `magasin`) dans les `requires_any` car, sur un long haystack JORF ou `libelles_haystack`, la simple co-occurrence distante produit du bruit.
+- **P1c (2026-04-26) — expressions multi-mots distinctives en direct.** `grande distribution`, `grande distribution alimentaire`, `hard-discount`, `discount alimentaire`, `marque de distributeur` (et variantes pluriel) sont passées en mode direct. *Pourquoi* : ces chaînes relèvent du jargon précis de la GD alimentaire ; elles n'apparaissent pas dans les textes santé / éducation / défense. L'argument anti-bruit historique (« char Leclerc ») tenait au cache DB stale après resserrement du `requires_any` de Leclerc, pas à la chaîne « grande distribution » qui n'aurait pas pu causer ce match. *Décision Cyril* : EXCLUS du direct, jugés trop larges (alimentaire amont ou hors-GD possible) — `commerce alimentaire`, `commerce de détail alimentaire`, `distribution alimentaire`, `centrale d'achat` (resté contextuel). Ces 4 termes peuvent matcher via `requires_any` chez d'autres keywords.
 - **EGalim n'est jamais un validateur de contexte** pour `Agriculture`, `Agriculteurs`, `Contrats amont`, `Matière première agricole`. *Pourquoi* : EGalim touche amont ET aval ; un texte « EGalim + agriculteurs » sans signal distribution n'est pas pertinent.
 - **Agriculture et Agriculteurs ont été retirés du lexique**. *Pourquoi* : trop génériques sur les longs textes ; les vrais textes GD contiennent toujours un signal plus spécifique (SRP+10, centrale d'achat, nom d'enseigne).
 - **P1a — formulations longues en direct** (« marges de la grande distribution », « équilibre dans les relations commerciales entre fournisseurs et distributeurs », « négociations commerciales dans la grande distribution »). *Pourquoi* : ces chaînes sont caractéristiques des titres de lois GD, quasi-jamais ailleurs.
@@ -100,10 +101,7 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 
 ### Priorité basse
 
-- **Confédération paysanne** : pas de RSS, listing `actu.php?id=N` sur la home. Implémenter un parser dédié par ID croissant si Cyril en exprime le besoin (~2 h de dev).
-- **Commission d'enquête Sénat « Marges industriels / grande distribution »** : Cyril a écarté l'ajout manuel (« rustine »). Doit remonter naturellement dès que le dump Sénat dosleg (P2) renvoie ses dossiers.
 - **Test du catch-up Lidl mensuel** : déclenché pour la première fois le 1er mai 2026. Vérifier volume + perf. Si trop long, réduire MAX_TEXTES par dossier pendant le catchup.
-- **Recos sport transmises** (`Recos_veille_sport_issues_audit_Lidl.md`) : P2, P5, P4 à porter sur l'instance sport quand Cyril le décide.
 
 ---
 
@@ -115,7 +113,9 @@ Un `upsert_many` **ne met PAS à jour** les `matched_keywords` d'un item déjà 
 
 ### Faux positifs par co-occurrence distante
 
-Sur un long texte (JORF article complet, `libelles_haystack`, `haystack_body` PDF), deux termes très éloignés sont considérés comme co-occurrents par le matcher. Conséquence : un terme contextuel validé via un `requires_any` trop générique produit du bruit. Règle : toujours passer par des signaux distinctifs dans les `requires_any` (ne JAMAIS mettre `grande distribution` seule comme seul validateur d'un terme ambigu).
+Sur un long texte (JORF article complet, `libelles_haystack`, `haystack_body` PDF), deux termes très éloignés sont considérés comme co-occurrents par le matcher. Conséquence : un terme contextuel validé via un `requires_any` trop COURT et générique produit du bruit. Règle : utiliser uniquement des MOTS COURTS distinctifs dans les `requires_any` (éviter `distributeur` / `enseigne` / `magasin` seuls comme validateurs).
+
+Cas historique « char Leclerc » : RÉ-INTERPRÉTÉ en P1c (2026-04-26). Le bruit ne venait pas de l'expression « grande distribution » dans le `requires_any` de `Leclerc` — il venait du cache DB stale (l'item gardait `matched_keywords=["Leclerc"]` après que le requires_any ait été resserré, parce que `upsert_many` ne re-matche pas). Le fix réel a été `reset_db=1`. La doctrine actuelle laisse `grande distribution` en direct sans crainte.
 
 ### Concurrence hardlinks cowork ↔ git
 
@@ -192,6 +192,8 @@ Coût estimé : ~30 min de bascule manuelle. Si la fréquence des bascules s'acc
 
 ## Historique
 
+- 2026-04-26 : P1c (lexique) — expressions multi-mots distinctives de la GD passées en direct : `Grande distribution`, `Grande distribution alimentaire`, `Hard-discount` / `Hard discount`, `Discount alimentaire`, `Marque de distributeur` (+ variantes pluriel). Re-cadrage de la règle anti-bruit : seuls les mots COURTS ambigus (`distributeur` / `enseigne` / `magasin`) restent à éviter en `requires_any` seul. Maintenus en contextuel sur demande Cyril : `commerce alimentaire`, `commerce de détail alimentaire`, `distribution alimentaire`, `centrale d'achat` (jugés trop larges). Comportement vérifié : `char Leclerc` toujours non-matché ; `commission d'enquête sur les marges...` continue de matcher (P1a). Penser à `reset_db=1` au prochain run pour propager P1c sur l'historique en cache.
+- 2026-04-26 : Confédération paysanne — parser dédié `src/sources/confederation_paysanne.py` sur le listing `/recherche.php?type=RP&raz=1&rech=0` (HTML artisanal, pas de RSS). Format `confederation_paysanne_listing` (par paquets de 20, pagination `&dc_old=N`, dates `DD.MM.YYYY`). Source activée, 7 tests offline ajoutés. Clôture priorité basse #1 (parser Conf. paysanne) et #4 (recos sport déjà portées côté instance sport). Vérifié priorité basse #2 (commission d'enquête Sénat) : la proposition de résolution `ppr25-069` (déposée 23/10/2025, état actif) figure bien dans le dump CSV `data.senat.fr/data/dosleg/dossiers-legislatifs.csv` ; le keyword direct `Marges des industriels et de la grande distribution` (P1a) matche parfaitement le titre — elle remontera au prochain run prod.
 - 2026-04-25 : P4 (haystack PDF dosleg AN) + P5 (propagation libelles aux amendements) + P7 (URLs agnostiques législature) + P2 (fix URLs Sénat CSV migrées) + P1a/P1b (lexique enrichi). Audit de couverture livré (`Audit_couverture_Veille_Lidl_v1.md`). Recos pour l'instance sport livrées (`Recos_veille_sport_issues_audit_Lidl.md`).
 - 2026-04-24 : port R37 (CR commissions Sénat + scan AN + logo gouvernement) puis R38 (strip main CR Sénat + refonte page CR + anti-bruit commission). Revert R36-B (logos SVG partout) sur demande Cyril. Ajout favicon Lidl, retrait mention SIDELINE CONSEIL du header, suppression catégorie Nominations, catch-up Lidl mensuel (18 mois, sans contexte). Flux orgas représentatives audités et activés (ANIA, FNSEA, Coord. rurale, JA, UFC — RSS officiels).
 - 2026-04-24 (matin) : création du repo, premier commit, activation Pages + custom domain, configuration des 6 secrets SMTP/DIGEST_TO, premier run de validation end-to-end. Livraison du PDF « Périmètre Lidl » + cahier des charges v1.0.

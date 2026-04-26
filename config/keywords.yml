@@ -13,10 +13,21 @@
 #
 # Règle de matching contextuel : le terme est retenu si au moins UN
 # des requires_any apparaît dans le haystack (titre + résumé + corps
-# éventuel). Les requires_any sont choisis TRÈS distinctifs — on
-# évite les marqueurs trop génériques ("grande distribution", "enseigne"
-# seuls) car ils apparaissent dans des textes longs (JORF, dossiers AN
-# avec libelles_haystack cumulés) sans rapport avec le sujet principal.
+# éventuel). Les requires_any sont choisis distinctifs — on évite les
+# mots COURTS et ambigus seuls ("distributeur", "enseigne", "magasin")
+# car ils apparaissent dans des textes longs (JORF, dossiers AN avec
+# libelles_haystack cumulés) sans rapport avec le sujet principal.
+#
+# 2026-04-26 (P1c) : les EXPRESSIONS MULTI-MOTS distinctives de la GD
+# alimentaire ont été promues en mode direct ("grande distribution",
+# "grande distribution alimentaire", "hard-discount", "discount
+# alimentaire", "marque de distributeur") car elles relèvent du jargon
+# précis (jamais en santé / éducation / défense). EXCLUS sur demande
+# Cyril : "commerce alimentaire", "commerce de détail (alimentaire)",
+# "distribution alimentaire", "centrale d'achat" (jugés trop larges).
+# L'argument anti-bruit historique ("char Leclerc") tenait au cache DB
+# stale après resserrement du requires_any de Leclerc, pas à la chaîne
+# "grande distribution" qui n'aurait pas pu causer ce match.
 
 # ============================================================================
 # ACTEUR — enseignes alimentaires
@@ -196,6 +207,20 @@ theme_negociations:
   - Negociations commerciales dans la grande distribution
   - Transparence dans les relations commerciales
 
+  # P1c (2026-04-26) — expressions distinctives de la GD alimentaire
+  # promues en direct. Couvre les textes qui mentionnent explicitement
+  # le secteur sans nommer une enseigne précise (cas du PJL souveraineté
+  # alimentaire ou des PPR commissions d'enquête).
+  # Décision Cyril : on EXCLUT "commerce alimentaire", "commerce de
+  # détail (alimentaire)", "distribution alimentaire", "centrale d'achat"
+  # (jugés trop larges, possible bruit hors GD ou amont agricole) et on
+  # n'admet que les expressions GD pures.
+  - Grande distribution
+  - Grande distribution alimentaire
+  - Hard-discount
+  - Hard discount
+  - Discount alimentaire
+
   # --- Contextuel -----------------------------------------------------------
   # EGalim : contextualisé car le terme circule aussi pour l'agriculture
   # pure (producteurs, filières) sans que la distribution soit concernée.
@@ -305,12 +330,15 @@ theme_negociations:
       - distributeur
       - marque de distributeur
 
+  # P1c (2026-04-26) : « marque de distributeur » est une expression
+  # technique de la GD (par opposition aux marques nationales) — pas
+  # ambiguë hors secteur. Direct.
   - term: Marque de distributeur
-    mode: contextual
-    requires_any:
-      - grande distribution
-      - distributeur
-      - enseigne
+    mode: direct
+  - term: Marques de distributeur
+    mode: direct
+  - term: Marques de distributeurs
+    mode: direct
 
   - term: Chèque alimentaire
     mode: contextual
