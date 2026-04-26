@@ -218,21 +218,45 @@ class KeywordMatcher:
         return out
 
     # ------------------------------------------------------------------
-    def build_snippet(self, original_text: str, window: int | None = None,
+    def build_snippet(self, original_text: str,
+                      matched_keywords: list[str] | None = None,
+                      window: int | None = None,
                       max_len: int = 800) -> str:
         """Extrait une phrase contenant le 1er mot-clé trouvé.
 
-        Identique à l'instance sport — seul le parcours de l'index
-        a changé (mode/requires_any) mais la recherche du snippet
-        utilise le pattern global : un hit quelconque (y compris
-        context marker) suffit pour centrer l'extrait.
+        2026-04-26 (port Bump R40-I sport) : si `matched_keywords` est
+        fourni, on construit un mini-pattern restreint à ces termes pour
+        que le snippet soit centré sur la 1re occurrence d'un MOT-CLÉ
+        RÉELLEMENT RETENU par le matcher — pas sur un context marker
+        seul (ex. « grande distribution » qui valide « Carrefour »
+        contextuel mais qui, avant ce fix, pouvait à lui tout seul piloter
+        l'ancrage du snippet alors que le vrai signal pertinent du texte
+        était ailleurs). Fallback sur le pattern global si aucun
+        matched_keyword n'apparaît dans `original_text` (cas où le match
+        venait de raw.haystack_body et pas du summary).
         """
         original_text = _clean_html(original_text)
         if not original_text:
             return ""
         effective_window = max(window or 0, max_len // 2)
         haystack_norm = _normalize(original_text)
-        m = self._pattern.search(haystack_norm)
+
+        # Mini-pattern restreint aux matched_keywords (priorité au fix R40-I).
+        m = None
+        if matched_keywords:
+            normed = sorted(
+                {_normalize(kw) for kw in matched_keywords if kw and _normalize(kw)},
+                key=len, reverse=True,
+            )
+            if normed:
+                escaped = "|".join(re.escape(t) for t in normed)
+                kw_pattern = re.compile(
+                    r"(?<![a-z0-9])(" + escaped + r")(?![a-z0-9])"
+                )
+                m = kw_pattern.search(haystack_norm)
+        # Fallback : pattern global (matchable + context markers).
+        if m is None:
+            m = self._pattern.search(haystack_norm)
         if not m:
             return original_text.strip()[: max_len].strip()
         pos = m.start()
@@ -270,8 +294,15 @@ class KeywordMatcher:
         Si `item.raw` contient `haystack_body` (JORF NOTICE+CID, CR AN)
         ou `libelles_haystack` (R36-E — cumul des libellés d'actes d'un
         dossier AN), on les ajoute au match pour capter les textes au
-        titre générique mais au corps pertinent. Le snippet reste
-        construit depuis le summary.
+        titre générique mais au corps pertinent.
+
+        2026-04-26 (port Bump R40-I sport) : le snippet est centré sur
+        la 1re occurrence d'un MATCHED keyword. Si aucun matched ne
+        figure dans `summary`, on retombe sur `haystack_body` (PDF du
+        CR / JORF) pour que l'extrait affiché sur le site contienne
+        bien la phrase qui a déclenché le match — sinon le lecteur
+        voyait un summary générique (« Compte rendu n° 75 — Présidence
+        de M. Travert ») sans rapport visible avec le keyword affiché.
         """
         for item in items:
             extras: list[str] = []
@@ -286,5 +317,24 @@ class KeywordMatcher:
             kws, fams = self.match(item.title, item.summary, *extras)
             item.matched_keywords = kws
             item.keyword_families = fams
-            item.snippet = self.build_snippet(item.summary or item.title or "")
+
+            # Snippet : on cherche d'abord dans summary (lisible). Si aucun
+            # matched_keyword n'y figure mais que le match vient de
+            # haystack_body, on centre l'extrait sur le PDF/CR pour donner
+            # un contexte exploitable au lecteur.
+            snippet_source = item.summary or item.title or ""
+            if kws and snippet_source:
+                norm_source = _normalize(snippet_source)
+                if not any(_normalize(k) in norm_source for k in kws if k):
+                    # Aucun matched dans summary → essayer haystack_body.
+                    for extra in extras:
+                        if not extra:
+                            continue
+                        norm_extra = _normalize(extra)
+                        if any(_normalize(k) in norm_extra for k in kws if k):
+                            snippet_source = extra
+                            break
+            item.snippet = self.build_snippet(
+                snippet_source, matched_keywords=kws,
+            )
         return items
