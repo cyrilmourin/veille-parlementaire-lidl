@@ -108,6 +108,7 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 - **Vérifier en live les URLs désactivées** (pour les passer `enabled: true`) : RappelConso (`/feed` renvoyait 404 au dernier test), DGCCRF (page 403), `min_outremer/presse`, `min_agriculture/agenda-du-ministre` (404). Remplacer par les vraies URLs quand identifiées.
 - **Agendas ministres data.gouv.fr** (MinAgri, MinEco, MinCommerce) : trois sources `enabled: false` avec URLs best-effort. Vérifier l'existence du dataset.
 - **OFPM et Médiateur commercial agricole** : URLs best-effort, à valider.
+- **Deep-link text-fragment sur CR séances plénières Sénat.** Le fix `d9f0e3e` (bascule `/dossier-legislatif/` → `/leg/`) couvre les dossiers législatifs Sénat. Mais les CR plénières Sénat (`/seances/<date>/<dir>/st<date>000.html`) sont des SOMMAIRES — le texte des débats est éclaté sur des sous-pages `st<date>001.html`, `st<date>002.html`… Pour qu'un text-fragment scrolle au bon endroit, il faudrait scraper ces sous-pages et identifier laquelle contient le 1er keyword, puis stocker l'URL ciblée. Pas implémenté à date. Workaround actuel : le navigateur ouvre la page sommaire au top, sans surlignage — pas idéal mais pas régressif. Solution prévue : enrichir `senat_cr_*` pour exposer un champ `raw["text_url"]` pointant vers la sous-page contenante, puis prioriser ce champ dans `site_export` pour le bloc text-fragment.
 
 ### Priorité basse
 
