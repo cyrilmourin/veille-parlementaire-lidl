@@ -100,7 +100,6 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 
 ### Priorité basse
 
-- **Commission d'enquête Sénat « Marges industriels / grande distribution »** : Cyril a écarté l'ajout manuel (« rustine »). Doit remonter naturellement dès que le dump Sénat dosleg (P2) renvoie ses dossiers. Vérification non concluante en local le 2026-04-26 : `data/veille.sqlite3` vide (0 octet, normal pour un worktree fresh) — à reconfirmer sur le run prod du jour.
 - **Test du catch-up Lidl mensuel** : déclenché pour la première fois le 1er mai 2026. Vérifier volume + perf. Si trop long, réduire MAX_TEXTES par dossier pendant le catchup.
 
 ---
@@ -190,7 +189,7 @@ Coût estimé : ~30 min de bascule manuelle. Si la fréquence des bascules s'acc
 
 ## Historique
 
-- 2026-04-26 : Confédération paysanne — parser dédié `src/sources/confederation_paysanne.py` sur le listing `/recherche.php?type=RP&raz=1&rech=0` (HTML artisanal, pas de RSS). Format `confederation_paysanne_listing` (par paquets de 20, pagination `&dc_old=N`, dates `DD.MM.YYYY`). Source activée, 7 tests offline ajoutés. Clôture priorité basse #1 (parser Conf. paysanne) et #4 (recos sport déjà portées côté instance sport).
+- 2026-04-26 : Confédération paysanne — parser dédié `src/sources/confederation_paysanne.py` sur le listing `/recherche.php?type=RP&raz=1&rech=0` (HTML artisanal, pas de RSS). Format `confederation_paysanne_listing` (par paquets de 20, pagination `&dc_old=N`, dates `DD.MM.YYYY`). Source activée, 7 tests offline ajoutés. Clôture priorité basse #1 (parser Conf. paysanne) et #4 (recos sport déjà portées côté instance sport). Vérifié priorité basse #2 (commission d'enquête Sénat) : la proposition de résolution `ppr25-069` (déposée 23/10/2025, état actif) figure bien dans le dump CSV `data.senat.fr/data/dosleg/dossiers-legislatifs.csv` ; le keyword direct `Marges des industriels et de la grande distribution` (P1a) matche parfaitement le titre — elle remontera au prochain run prod.
 - 2026-04-25 : P4 (haystack PDF dosleg AN) + P5 (propagation libelles aux amendements) + P7 (URLs agnostiques législature) + P2 (fix URLs Sénat CSV migrées) + P1a/P1b (lexique enrichi). Audit de couverture livré (`Audit_couverture_Veille_Lidl_v1.md`). Recos pour l'instance sport livrées (`Recos_veille_sport_issues_audit_Lidl.md`).
 - 2026-04-24 : port R37 (CR commissions Sénat + scan AN + logo gouvernement) puis R38 (strip main CR Sénat + refonte page CR + anti-bruit commission). Revert R36-B (logos SVG partout) sur demande Cyril. Ajout favicon Lidl, retrait mention SIDELINE CONSEIL du header, suppression catégorie Nominations, catch-up Lidl mensuel (18 mois, sans contexte). Flux orgas représentatives audités et activés (ANIA, FNSEA, Coord. rurale, JA, UFC — RSS officiels).
 - 2026-04-24 (matin) : création du repo, premier commit, activation Pages + custom domain, configuration des 6 secrets SMTP/DIGEST_TO, premier run de validation end-to-end. Livraison du PDF « Périmètre Lidl » + cahier des charges v1.0.
