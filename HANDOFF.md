@@ -90,7 +90,8 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 
 ### Priorité haute
 
-- **Surveiller le run #34 lancé le 2026-04-26** (`reset_db=1`, `since_days=180`) — déclenché manuellement après merge PR #1 pour propager P1c + cold-start P4 sur l'historique 180j. Timeout workflow 25 min, à suivre — en cas de dépassement, réduire `MAX_TEXTES_PER_DOSSIER` / `MAX_RAPPORTS_PER_DOSSIER` ou splitter en plusieurs passes. Vérifier sur le site : remontée de `ppr25-069` (commission Sénat marges GD), 1ers communiqués Conf. paysanne, items matchés via le keyword direct `grande distribution`. **Avertir Anouck** : le digest mail correspondant couvre 180 jours, pas la fenêtre habituelle 1j — il sera très volumineux.
+- **Surveiller le run #38** lancé le 2026-04-26 soir sur `ae273ee` (`reset_db=1`, `since_days=180`, `no_email=1`) — propage le fix CR AN (commit `a2881b9` : haystack 10 k → 200 k) et le fix workflow (`ae273ee` : purge `data/an_cr_state.json` sur reset_db). Vérifier sur le site `/items/comptes_rendus/` que les séances plénières AN ET les réunions de commission AN matchées remontent (avant fix : 0 sur 6 mois). Cible attendue : plusieurs dizaines d'items minimum.
+- Les runs #34 et #36 (reset_db précédents, sans le fix CR AN ou sans la purge state) sont obsolètes.
 
 ### Priorité moyenne
 
@@ -109,6 +110,19 @@ La section Historique se cumule, les autres sont réécrites à chaque passe.
 ### Cache DB vs lexique en cours d'évolution
 
 Un `upsert_many` **ne met PAS à jour** les `matched_keywords` d'un item déjà en DB. Quand on modifie le lexique, les items historiques gardent leurs anciens matches. Pour propager proprement un changement de lexique : **`reset_db=1`** ou `reset_category=<cat>`. Piège typique : « char Leclerc » qui restait matché après le resserrement du requires_any, alors que le matcher local retournait bien `[]`.
+
+### State files de scrapers incrémentaux et `reset_db`
+
+Le scraper `an_cr_commissions` mémorise dans `data/an_cr_state.json` les numéros de CR déjà ingérés par commission, et SKIP les num déjà présents au prochain run pour économiser des requêtes HTTP. Conséquence : un `reset_db=1` qui ne purge QUE la SQLite laisse l'état intact → les CR purgés ne sont **jamais** ré-ingérés. C'est exactement ce qui a masqué pendant 6 mois le bug de troncature haystack 10 k (cf. § « Troncature `haystack_body` AN »). **Fix workflow** (`ae273ee`, 2026-04-26) : `reset_db=1` purge maintenant aussi `data/an_cr_state.json`. Le script `scripts/reset_category.py comptes_rendus` purge déjà les deux (R39-M).
+
+### Troncature `haystack_body` AN — sous-dimensionnement historique
+
+Bug détecté le 2026-04-26 (signalement Cyril : « 0 CR AN matché sur 6 mois »). Les deux sources CR AN tronquaient le contenu PDF/XML alimentant le matcher bien en deçà de la taille réelle des documents :
+
+- `an_cr_commissions._extract_pdf_text` : `max_chars=10_000` alors que les CR longs (examen de loi, audition longue) font 60–180 k chars. Audit cion-eco : 22 CR contiennent un terme GD, dont 13 où le keyword est positionné après pos 10 000 (donc invisible).
+- `an_syceron` (séances plénières) : aucun `haystack_body` exposé, le matcher était limité au `summary[:2000]`. Une séance plénière fait en médiane 218 k chars (max 354 k).
+
+Fix `a2881b9` : passage à 200 k dans les deux. Validation : 9/9 CR témoins cion-eco matchent (jusqu'à 15 keywords) + 24/50 séances plénières récentes matchent vs 1/50 avant (×24). Coût DB estimé : ~120 MB additionnel sur la SQLite cachée en CI, acceptable.
 
 ### Faux positifs par co-occurrence distante
 
@@ -191,6 +205,7 @@ Coût estimé : ~30 min de bascule manuelle. Si la fréquence des bascules s'acc
 
 ## Historique
 
+- 2026-04-26 (soir, post-merge PR #1) : Cyril signale « 0 CR AN matché sur 6 mois » côté commissions ET séances plénières. Diagnostic : troncature haystack 10 k chars (an_cr_commissions._extract_pdf_text) et 2 k chars (an_syceron via summary). Sur 9 CR cion-eco témoins contenant « grande distribution » au-delà de pos 10 000, aucun ne matchait. Fix `a2881b9` : passage à 200 k chars dans les deux sources. Validation : 9/9 CR matchent + 24/50 séances vs 1/50. Bug workflow trouvé en parallèle : `reset_db=1` ne purgeait pas `data/an_cr_state.json` → les CR pré-reset_db étaient skippés au run suivant. Fix `ae273ee`. Run #38 lancé sur `ae273ee` (`reset_db=1, since_days=180, no_email=1`) pour propager les deux fixes sur 180j. Runs #34 et #36 (avant fixes ou avec workflow non corrigé) sont obsolètes. Documentation pièges connus enrichie.
 - 2026-04-26 (soir) : merge PR #1 (`bf9c3c6` sur main) — parser Conf. paysanne + lexique P1c + élargissement `.claude/settings.json` + `defaultMode: acceptEdits`. Run #34 déclenché immédiatement après (workflow_dispatch, `reset_db=1`, `since_days=180`) pour propager P1c sur 180j d'historique et faire le cold-start P4. À surveiller dans la prochaine session.
 - 2026-04-26 : P1c (lexique) — expressions multi-mots distinctives de la GD passées en direct : `Grande distribution`, `Grande distribution alimentaire`, `Hard-discount` / `Hard discount`, `Discount alimentaire`, `Marque de distributeur` (+ variantes pluriel). Re-cadrage de la règle anti-bruit : seuls les mots COURTS ambigus (`distributeur` / `enseigne` / `magasin`) restent à éviter en `requires_any` seul. Maintenus en contextuel sur demande Cyril : `commerce alimentaire`, `commerce de détail alimentaire`, `distribution alimentaire`, `centrale d'achat` (jugés trop larges). Comportement vérifié : `char Leclerc` toujours non-matché ; `commission d'enquête sur les marges...` continue de matcher (P1a + P1c).
 - 2026-04-26 : Confédération paysanne — parser dédié `src/sources/confederation_paysanne.py` sur le listing `/recherche.php?type=RP&raz=1&rech=0` (HTML artisanal, pas de RSS). Format `confederation_paysanne_listing` (par paquets de 20, pagination `&dc_old=N`, dates `DD.MM.YYYY`). Source activée, 7 tests offline ajoutés. Clôture priorité basse #1 (parser Conf. paysanne) et #4 (recos sport déjà portées côté instance sport). Vérifié priorité basse #2 (commission d'enquête Sénat) : la proposition de résolution `ppr25-069` (déposée 23/10/2025, état actif) figure bien dans le dump CSV `data.senat.fr/data/dosleg/dossiers-legislatifs.csv` ; le keyword direct `Marges des industriels et de la grande distribution` (P1a) matche parfaitement le titre — elle remontera au prochain run prod.
