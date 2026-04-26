@@ -313,6 +313,23 @@ def _fetch_debats_zip(src: dict) -> list[Item]:
 
 _NORM_RE = re.compile(r"[\s_\-\.]+")
 
+# 2026-04-26 — extracteur du slug d'un dossier-législatif Sénat depuis l'URL.
+# URL type : http://www.senat.fr/dossier-legislatif/ppl24-247.html
+# Slug : « ppl24-247 ». Utilisé pour générer un uid unique par dossier
+# (le « Numéro de texte » seul est recyclé chaque session, voir bug
+# « gaspillage alimentaire 2024 » avec URL ppl77-247 documenté dans
+# senat.py::_normalize_rows ainsi que dans HANDOFF.md).
+_SENAT_DOSLEG_SLUG_RE = re.compile(
+    r"/dossier-legislatif/([A-Za-z][A-Za-z0-9\-]+?)\.html?", re.IGNORECASE,
+)
+
+
+def _extract_dosleg_slug(url: str | None) -> str:
+    if not url:
+        return ""
+    m = _SENAT_DOSLEG_SLUG_RE.search(url)
+    return m.group(1) if m else ""
+
 
 def _parse_date_any(s: str | None) -> datetime | None:
     """Parse une date ISO (YYYY-MM-DD) ou française (DD/MM/YYYY).
@@ -403,15 +420,22 @@ def _normalize_rows(src: dict, rows: list[dict], csv_name: str = "") -> Iterable
     cat = src["category"]
 
     # Dossiers législatifs — colonnes réelles (CSV en cp1252) :
-    # ppl       : 'Numéro de texte', 'Titre', 'Date de dépôt', 'URL du dossier', ...
-    # promulguees : 'Titre', 'Numéro de la loi', 'Date de promulgation', 'URL du dossier'
-    # dosleg    : format legacy / peut varier
+    # ppl       : 'Session', 'Numéro de texte', 'Date de dépôt', 'Auteurs',
+    #             'Titre', 'Type de dossier', 'URL du dossier',
+    #             'État du dossier', ...
+    # promulguees : 'Titre', 'Numéro de la loi', 'Date de promulgation',
+    #             'URL du dossier', 'État du dossier', ...
+    # dosleg    : 'Titre', 'Type de dossier', 'Date initiale',
+    #             'URL du dossier', 'État du dossier', ...
     if sid in ("senat_dosleg", "senat_ppl", "senat_promulguees"):
         for r in rows:
-            uid = _pick(r, "Numéro de texte", "Numéro de la loi",
+            num = _pick(r, "Numéro de texte", "Numéro de la loi",
                          "numero_initiative", "numeroInitiative",
                          "numero", "num", "id_dosleg", "id", "uid")
+            session = _pick(r, "Session", "session", "annee_session",
+                             "anneeSession")
             titre = _pick(r, "Titre", "intitule", "libelle", "intituleLong")
+            url_csv = _pick(r, "URL du dossier", "url", "lien")
             # Date : CSV Sénat historiquement en DD/MM/YYYY. _parse_date_any
             # couvre ISO + DD/MM/YYYY + "DD mois YYYY". Sans ça, tous les
             # dossiers issus des CSV arrivaient sans date sur le site.
@@ -422,9 +446,28 @@ def _normalize_rows(src: dict, rows: list[dict], csv_name: str = "") -> Iterable
                 "datePromulgation", "datePublication",
                 "date_publication", "date",
             ))
-            if not uid or not titre:
+            if not num or not titre:
                 continue
-            url = (_pick(r, "URL du dossier", "url", "lien")
+
+            # 2026-04-26 — uid composite. Le "Numéro de texte" SEUL n'est
+            # PAS unique : il est recyclé chaque session parlementaire
+            # (ex. ppl.csv contient 9 lignes avec num=247, sessions 1977
+            # à 2024). Avec uid=num seul, store.upsert_many fait CONFLICT
+            # sur hash_key=senat_ppl::247 → premier inséré gagne sur l'URL
+            # (immutable), updates suivants sur title/published_at/matched.
+            # Conséquence observée par Cyril : item « gaspillage alimentaire »
+            # (ppl 2024-247) avec URL pointant sur ppl77-247.html (1977).
+            # Solution : préfixer uid par la session quand dispo, sinon
+            # extraire du slug d'URL (ex. ppl24-247), sinon fallback num.
+            uid_from_url = _extract_dosleg_slug(url_csv)
+            if uid_from_url:
+                uid = uid_from_url
+            elif session:
+                uid = f"{session}-{num}"
+            else:
+                uid = num
+
+            url = (url_csv
                    or f"https://www.senat.fr/dossier-legislatif/{uid}.html")
             # Titre : CSV Sénat remontent souvent le libellé en minuscule
             # ("projet de loi relatif à…"). On aligne la capitalisation sur
@@ -440,15 +483,31 @@ def _normalize_rows(src: dict, rows: list[dict], csv_name: str = "") -> Iterable
             # avec leurs contreparties senat_akn ou AN. Pas de url_an côté
             # CSV (absent des colonnes) — le mapping AN se fera via
             # senat_akn qui a l'alias url-AN dans le FRBR.
-            raw["dossier_id"] = str(uid)
+            raw["dossier_id"] = uid_from_url or f"{session}-{num}" if session else str(num)
+
+            # 2026-04-26 — status_label depuis la colonne « État du dossier »
+            # quand dispo. Avant : senat_ppl / senat_dosleg ne renseignaient
+            # rien → cartouche statut vide sur le site (signalé par Cyril).
+            # « caduc », « adopté », « promulgué », « Première lecture (Sénat) »…
+            etat = _pick(r, "État du dossier", "Etat du dossier",
+                          "etat", "etatDossier")
+            status_label_v: str | None = None
             if sid == "senat_promulguees":
                 raw["is_promulgated"] = True
-                raw.setdefault("status_label", "Promulguée")
+                status_label_v = "Promulguée"
+            elif etat:
+                # Capitaliser proprement (« caduc » → « Caduc »,
+                # « première lecture (sénat) » → « Première lecture (Sénat) »).
+                status_label_v = _cap_first(etat).strip()
+            if status_label_v:
+                raw["status_label"] = status_label_v
+
             yield Item(
                 source_id=sid, uid=str(uid), category=cat, chamber="Senat",
                 title=titre_disp[:220], url=url,
                 published_at=date,
                 summary=(titre_disp + " — " + extras)[:2000],
+                status_label=status_label_v,
                 raw=raw,
             )
 
