@@ -2710,10 +2710,28 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
         # pas des keywords thématiques — ils remontaient comme chips
         # parasites sur les cards UI. Convention : tout matched_keyword
         # commençant par '(' est un marqueur interne, exclu de l'UI.
+        all_kws = r.get("matched_keywords") or []
         public_keywords = [
-            k for k in (r.get("matched_keywords") or [])
+            k for k in all_kws
             if not (isinstance(k, str) and k.startswith("("))
         ]
+        # R39-H (2026-04-25) : si l'item ne matche QUE via un pseudo-keyword
+        # de bypass, l'utilisateur doit savoir d'où vient le match (sinon
+        # il voit l'item remonter sans aucune chip thématique et se demande
+        # pourquoi). On expose `match_reason` au frontmatter avec un libellé
+        # humain. Le template Hugo l'affiche comme tag léger sous la chambre.
+        # `match_reason` n'est posé QUE si public_keywords est vide.
+        match_reason = ""
+        if not public_keywords and all_kws:
+            bypass_kws = [k for k in all_kws if isinstance(k, str)
+                          and k.startswith("(")]
+            if any("organe" in k.lower() for k in bypass_kws):
+                match_reason = "Matché via le périmètre de la commission"
+            elif any("flux complet" in k.lower() for k in bypass_kws):
+                match_reason = "Source institutionnelle (flux complet)"
+            elif bypass_kws:
+                # fallback générique : on affiche le label nettoyé
+                match_reason = f"Matché via {bypass_kws[0].strip('()')}"
         fm += [
             f"category: {cat}",
             f'chamber: "{r.get("chamber") or ""}"',
@@ -2726,6 +2744,8 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
             f'status_label: "{status_label}"',
             f"is_promulgated: {str(is_promulgated).lower()}",
         ]
+        if match_reason:
+            fm.append(f'match_reason: "{match_reason}"')
         if auteur_label:
             fm.append(f'auteur: "{auteur_label.replace(chr(34), chr(39))}"')
         if auteur_groupe:
