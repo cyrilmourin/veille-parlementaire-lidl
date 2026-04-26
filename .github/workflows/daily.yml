@@ -80,6 +80,15 @@ jobs:
         run: |
           echo "reset_db=1 → purge de data/veille.sqlite3"
           rm -f data/veille.sqlite3
+          # 2026-04-26 : purger AUSSI les state files des scrapers
+          # incrémentaux. Sans ça, an_cr_state.json mémorise les CR AN
+          # déjà ingérés et le scraper les SKIP au prochain run même si
+          # la DB a été vidée → les CR pré-reset_db ne reviennent jamais.
+          # Symptôme observé : 0 CR commission AN matché sur 6 mois après
+          # un reset_db, parce que le state restait avec scanned=[1..79].
+          # Idempotent : `rm -f` ne plante pas si les fichiers manquent.
+          echo "reset_db=1 → purge des state files de scrapers incrémentaux"
+          rm -f data/an_cr_state.json
 
       - name: Reset catégorie ciblée (si demandé)
         if: github.event.inputs.reset_category != '' && github.event.inputs.reset_db != '1'
