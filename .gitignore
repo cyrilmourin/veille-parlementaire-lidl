@@ -15,7 +15,11 @@ data/sample_*.html
 data/veille.sqlite3
 data/veille.sqlite3-journal
 data/*.sqlite3.bak.*
-data/senat_slugs.json
+# data/senat_slugs.json : versionné depuis 2026-04-26 (cache des 348
+# sénateurs pour résoudre les photos sur les questions Sénat). Sans ce
+# fichier, _enrich_senat_question_photo retourne sans rien faire et
+# les chips photo restent vides côté UI. Régénération : `python -m
+# scripts.build_senat_slugs`.
 check_run.py
 site/public/
 site/resources/
