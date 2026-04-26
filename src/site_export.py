@@ -2543,16 +2543,39 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
         frontmatter_date = published_at_real or _inserted_at
         has_real_date = bool(published_at_real)
         source_url = (r.get("url") or "").replace('"', "")
-        # R13-K (2026-04-21) : pour les comptes rendus, on ajoute un
-        # text-fragment (#:~:text=<kw>) sur le 1er mot-clé matché. Permet
-        # au navigateur (Chrome, Edge, Safari 16.4+) de sauter directement
-        # à la 1re occurrence du kw dans la page AN/Sénat. Firefox le
-        # dégrade silencieusement (URL normale). Pas d'ancre si pas de kw.
-        if cat == "comptes_rendus" and source_url and "#" not in source_url:
+        # R13-K (2026-04-21) + extension 2026-04-26 : ajout d'un text-fragment
+        # `#:~:text=<kw>` sur l'URL source pour faire scroller le navigateur
+        # directement à la 1re occurrence du keyword sur la page cible
+        # (Chrome, Edge, Safari 16.4+, Firefox 131+). Dégradation gracieuse :
+        # URL normale si le navigateur ne supporte pas, ou si le texte n'est
+        # pas trouvé (ex. PDF embarqué).
+        #
+        # Périmètre élargi sur demande Cyril (2026-04-26) : initialement
+        # limité aux comptes_rendus, on l'applique désormais à toutes les
+        # occurrences parlementaires (dossiers législatifs, amendements,
+        # questions, comptes rendus, JORF). Restriction par hôte pour
+        # éviter d'ajouter le fragment sur des URLs tierces (RSS orgas,
+        # etc.) où l'effet serait inutile ou non testé.
+        #
+        # Choix du keyword : le PLUS LONG dans matched_keywords. Une expression
+        # longue (ex. « Marges des industriels et de la grande distribution »)
+        # est plus distinctive qu'un mot court (« Lidl ») et minimise les
+        # faux positifs (ex. « Lidl » dans un menu de navigation).
+        _OFFICIAL_HOSTS = (
+            "assemblee-nationale.fr",
+            "senat.fr",
+            "legifrance.gouv.fr",
+        )
+        if (
+            source_url
+            and "#" not in source_url
+            and any(h in source_url.lower() for h in _OFFICIAL_HOSTS)
+        ):
             kws = r.get("matched_keywords") or []
             if kws:
                 from urllib.parse import quote
-                fragment = quote(str(kws[0]), safe="")
+                kw_choice = max(kws, key=len)
+                fragment = quote(str(kw_choice), safe="")
                 source_url = f"{source_url}#:~:text={fragment}"
         # R13-D / R14 : la longueur du snippet est désormais imposée en
         # amont dans `_load` via `build_snippet(..., max_len=target)`.
