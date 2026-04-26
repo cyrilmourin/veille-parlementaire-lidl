@@ -377,10 +377,19 @@ def _fetch_xml_zip(src: dict) -> list[Item]:
         else:
             title = f"Compte rendu AN — {base}"[:220]
 
-        # Résumé : tronqué à 2000 caractères. Le matcher mots-clés verra
-        # donc la première partie du CR, suffisant pour détecter une
-        # mention « sport ».
+        # Résumé : tronqué à 2000 caractères pour l'affichage UI / digest.
         summary = text[:2000]
+
+        # 2026-04-26 (P1c-fix) — haystack_body pour le matcher.
+        # Une séance plénière AN fait en médiane ~218 k chars, max ~354 k.
+        # Le summary tronqué à 2 k ne voit que < 1 % du contenu : tout
+        # mot-clé GD mentionné au-delà était raté. On expose maintenant
+        # 200 k chars au matcher via raw.haystack_body (consommé par
+        # KeywordMatcher.apply, cf. src/keywords.py R26). Couvre 95 %
+        # des séances ; pour les très longues (>200 k), seules les
+        # premières 200 k sont vues — acceptable, les sujets GD
+        # apparaissent rarement uniquement en toute fin de séance.
+        haystack_body = text[:200000]
 
         items.append(Item(
             source_id=sid,
@@ -407,6 +416,7 @@ def _fetch_xml_zip(src: dict) -> list[Item]:
                 "seance_date_iso": (
                     ts_dt.date().isoformat() if ts_dt else ""
                 ),
+                "haystack_body": haystack_body,
             },
         ))
     log.info("%s : %d items (sur %d fichiers XML/HTML)", sid, len(items), file_count)

@@ -116,7 +116,7 @@ def _session_code(d: datetime) -> str:
     return f"{(y - 1) % 100:02d}{y % 100:02d}"
 
 
-def _extract_pdf_text(pdf_bytes: bytes, max_chars: int = 10000) -> str:
+def _extract_pdf_text(pdf_bytes: bytes, max_chars: int = 200000) -> str:
     """Extrait le texte brut d'un PDF avec pypdf, tronque à max_chars.
 
     Si pypdf indisponible (dépendance non installée), renvoie "" sans
@@ -128,6 +128,17 @@ def _extract_pdf_text(pdf_bytes: bytes, max_chars: int = 10000) -> str:
     PyPDF extrait les titres de page avec espacement caractère par
     caractère, bruit visible en début d'extrait. On coupe avant le
     premier mot de contenu réel.
+
+    2026-04-26 (P1c-fix) : `max_chars` passé de 10 000 à 200 000.
+    Cause racine du « 0 CR AN matché sur 6 mois » signalé par Cyril :
+    sur les CR longs (60–180 k chars — examen de loi, longues auditions),
+    les keywords GD (« grande distribution », « EGalim », « centrale
+    d'achat ») apparaissent souvent au-delà de la position 10 000 dans
+    le texte du PDF (ex. cion-eco#006 : pos 30 559 ; #030 : 19 450).
+    Avec une troncature à 10 k, le matcher ne voyait jamais ces
+    occurrences. 200 k couvre 99 % des CR observés (max constaté ~182 k
+    sur cion-soc#030). Coût DB estimé : ~120 MB sur ~600 CR matchés,
+    acceptable pour la SQLite cachée en CI.
     """
     try:
         from pypdf import PdfReader  # type: ignore
