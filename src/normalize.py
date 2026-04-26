@@ -18,6 +18,7 @@ from .sources import (  # noqa: F401
     an_cr_commissions,
     assemblee,
     assemblee_rapports,
+    confederation_paysanne,
     data_gouv,
     dila_jorf,
     elysee,
@@ -74,6 +75,13 @@ ROUTER: list[tuple[Callable[[dict, dict], bool], Callable[[dict], list[Item]]]] 
     (
         lambda group, src: src.get("format") == "senat_commission_agenda_html",
         senat_commission_agenda.fetch_source,
+    ),
+    # 2026-04-26 — Confédération paysanne : page communiqués servie par
+    # `recherche.php?type=RP` (HTML artisanal, pas de RSS), parser dédié.
+    # Routé par format pour passer AVANT la règle catch-all `html_generic`.
+    (
+        lambda group, src: src.get("format") == "confederation_paysanne_listing",
+        confederation_paysanne.fetch_source,
     ),
     # R37-A (2026-04-24) — Scraper CR hebdomadaires commission Sénat.
     # URL listing /compte-rendu-commissions/<slug>.html, puis fetch de chaque

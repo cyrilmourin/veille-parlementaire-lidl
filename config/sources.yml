@@ -527,19 +527,18 @@ organisations:
       title_prefix: "Coord. rurale —"
 
     # Confédération paysanne — 3e syndicat, volet distribution / contrats.
-    # Pas de flux RSS identifié ; home contient des liens actu.php?id=N.
-    # Scraping générique de la home (56 Ko). Enabled false pour la v1 :
-    # le listing n'est pas stable, on laissera Cyril activer après
-    # audit manuel du rendu.
+    # Pas de RSS officiel ; communiqués servis par `recherche.php?type=RP`
+    # (listing par paquets de 20, pagination via &dc_old=N). Parser dédié
+    # confederation_paysanne.py — apparie <div class="f-date">DD.MM.YYYY</div>
+    # avec le <a href="rp_article.php?id=N"> qui suit dans le DOM.
     - id: org_confederation_paysanne
       category: communiques
-      url: https://www.confederationpaysanne.fr/
-      format: html
+      url: https://www.confederationpaysanne.fr/recherche.php?type=RP&raz=1&rech=0
+      format: confederation_paysanne_listing
       chamber: ConfPaysanne
       title_prefix: "Conf. paysanne —"
-      fetch_meta: true
-      fetch_meta_limit: 40
-      enabled: false
+      pages: 2
+      cutoff_days: 120
 
     # Jeunes Agriculteurs — positions sur installation et contrats GD.
     # Flux RSS WordPress (/feed sans slash — avec slash = 301).
