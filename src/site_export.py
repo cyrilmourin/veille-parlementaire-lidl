@@ -1610,6 +1610,35 @@ _SENAT_DOSSIER_ID_RE = re.compile(
 )
 
 
+# 2026-04-26 — bascule URL Sénat /dossier-legislatif/<slug>.html → /leg/<slug>.html
+# pour le deep-link text-fragment. La page /dossier-legislatif/ est un index
+# (timeline + statut) qui ne contient que le TITRE du texte, pas le corps ;
+# la page /leg/ sert le texte intégral de la PPL/PPR/PJL — le keyword
+# (s'il n'est pas dans le titre) n'est trouvable par le navigateur que là.
+#
+# Restriction par année : disponibilité de /leg/ vérifiée empiriquement,
+# tous les /leg/ppl19-* à ppl26-* observés sont publiés (HTTP 200) tant que
+# le numéro a été utilisé pour un dépôt, alors que /leg/ppl77-*, ppl85-*,
+# ppl00-* sont systématiquement 404. On limite la bascule aux sessions
+# 19/20/21/22/23/24/25/26/27/28/29 (sessions 2019-2029) pour éviter de
+# router un dossier ancien vers une 404. Au-delà de 2029, étendre la regex.
+_SENAT_LEG_BASCULE_RE = re.compile(
+    r"(?P<base>https?://(?:www\.)?senat\.fr)"
+    r"/dossier-legislatif/(?P<slug>(?:ppl|ppr|pjl)(?:19|2\d)-\d+)\.html?",
+    re.IGNORECASE,
+)
+
+
+def _senat_dosleg_to_leg(url: str) -> str:
+    """Voir _SENAT_LEG_BASCULE_RE."""
+    if not url:
+        return url
+    m = _SENAT_LEG_BASCULE_RE.search(url)
+    if not m:
+        return url
+    return f"{m.group('base')}/leg/{m.group('slug')}.html"
+
+
 def _extract_dossier_ids_from_url(url: str) -> set[str]:
     """Extrait les identifiants AN/Sénat reconnaissables dans une URL.
     Retourne un set (vide si aucun match). Normalisé lowercase.
@@ -2561,6 +2590,14 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
         # longue (ex. « Marges des industriels et de la grande distribution »)
         # est plus distinctive qu'un mot court (« Lidl ») et minimise les
         # faux positifs (ex. « Lidl » dans un menu de navigation).
+        #
+        # Sénat — bascule `/dossier-legislatif/<slug>.html` → `/leg/<slug>.html`
+        # pour les slugs modernes (ppl/ppr/pjl XX-NNN). La page
+        # /dossier-legislatif/ est un INDEX (synthèse + timeline du dossier),
+        # elle ne contient PAS le corps du texte → le text-fragment n'y trouve
+        # rien et le navigateur reste au top. La page /leg/ sert le texte
+        # intégral indexé par le DOM, le keyword y est trouvable. Vérifié live
+        # sur ppr25-069 (« Marges de la grande distribution »).
         _OFFICIAL_HOSTS = (
             "assemblee-nationale.fr",
             "senat.fr",
@@ -2574,6 +2611,7 @@ def _write_item_pages(items_dir: Path, rows: list[dict]):
             kws = r.get("matched_keywords") or []
             if kws:
                 from urllib.parse import quote
+                source_url = _senat_dosleg_to_leg(source_url)
                 kw_choice = max(kws, key=len)
                 fragment = quote(str(kw_choice), safe="")
                 source_url = f"{source_url}#:~:text={fragment}"
