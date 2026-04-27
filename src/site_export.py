@@ -286,27 +286,24 @@ def _fix_cr_row(r: dict) -> None:
             if old_iso != seance_iso:
                 fake_an_date = True
     if looks_generic or fake_an_date:
-        theme = (
-            (raw.get("theme") or "").strip()
-            or an_theme_extracted
-        )
-        # Si on n'a toujours pas de thème mais qu'on a un titre existant qui
-        # ressemble à « Séance AN du JJ/MM/AAAA — <bruit> », on le refait
-        # depuis le résumé (plus fiable que _THEMES_RE qui capture les
-        # jetons de balise).
-        if not theme and cham == "AN":
-            _, theme_ex = _extract_an_cr_meta(r.get("summary"))
-            theme = theme_ex
-        # UX-E : même logique pour les CR Sénat pré-patch qui apparaissaient
-        # avec le titre "CR intégral — d20260205.xml" (date + .xml du nom
-        # de fichier dans le titre). `extract_cr_theme` sait repérer les
-        # patterns Sénat ("Discussion du projet de loi…", "Questions au
-        # gouvernement", "Examen du rapport…") dans les 8000 premiers chars
-        # du résumé, exactement comme le fait le connecteur au moment de
-        # l'ingestion. Ça réparé les CR historiques sans reset DB.
-        if not theme and cham in ("Senat", "Sénat"):
-            from .sources._common import extract_cr_theme
-            theme = extract_cr_theme(r.get("summary")) or ""
+        # 2026-04-27 — pour les CR plénière AN, on n'utilise PLUS le thème
+        # (1er point d'ODJ) dans le titre. Il était trompeur car ne reflétait
+        # pas l'occurrence du keyword qui justifie l'inclusion (Cyril). On
+        # reste sur « Séance du JJ/MM/AAAA — Compte rendu intégral ». Le
+        # snippet centré + le text-fragment dans l'URL donnent le contexte
+        # précis. Pour le Sénat, on garde le comportement existant : les
+        # CR Sénat sont structurés différemment et le thème de séance reste
+        # informatif.
+        if cham == "AN":
+            theme = ""
+        else:
+            theme = (
+                (raw.get("theme") or "").strip()
+                or an_theme_extracted
+            )
+            if not theme and cham in ("Senat", "Sénat"):
+                from .sources._common import extract_cr_theme
+                theme = extract_cr_theme(r.get("summary")) or ""
         date_label = ""
         if re.match(r"^\d{4}-\d{2}-\d{2}$", seance_iso):
             y, mo, dd = seance_iso.split("-")
@@ -1417,6 +1414,82 @@ def _filter_disabled_sources(rows: list[dict]) -> list[dict]:
     return [r for r in rows if (r.get("source_id") or "").strip() not in disabled]
 
 
+# 2026-04-27 — red list explicite. Permet à Cyril de neutraliser un item
+# précis (faux positif unique, homonymie type « char Leclerc ») sans
+# toucher au lexique. Fichier `config/redlist.yml` listé par URL canonique.
+# La normalisation strippe scheme http/https, fragment text-fragment, et
+# trailing slash pour comparer.
+def _redlist_url_canon(url: str) -> str:
+    """Canonicalise une URL pour comparaison red list.
+
+    Identique en esprit à `_url_canon` du dédup mais factorisée pour ne
+    pas dépendre du scope local de `_dedup`. Strippe scheme + fragment
+    + trailing slash.
+    """
+    if not url:
+        return ""
+    s = url.strip().lower()
+    s = re.sub(r"^https?://", "", s)
+    s = s.split("#", 1)[0]
+    if s.endswith("/"):
+        s = s[:-1]
+    return s
+
+
+def _load_redlist(config_path: str = "config/redlist.yml") -> set[str]:
+    """Charge `config/redlist.yml` en un set d'URLs canoniques.
+
+    Format YAML attendu : `urls: [<url>, <url>, ...]`. Idempotent et safe :
+    si le fichier est absent ou mal formé, retourne un set vide (pas de
+    red list active, comportement legacy préservé).
+    """
+    try:
+        import yaml
+        with open(config_path, "r", encoding="utf-8") as fp:
+            cfg = yaml.safe_load(fp) or {}
+    except Exception:
+        return set()
+    if not isinstance(cfg, dict):
+        return set()
+    raw = cfg.get("urls") or []
+    if not isinstance(raw, list):
+        return set()
+    out: set[str] = set()
+    for u in raw:
+        if isinstance(u, str):
+            canon = _redlist_url_canon(u)
+            if canon:
+                out.add(canon)
+    return out
+
+
+def _filter_redlisted(rows: list[dict]) -> list[dict]:
+    """Retire les rows dont l'URL canonique est dans `config/redlist.yml`.
+
+    Le matching se fait sur l'URL stockée en DB (sans le text-fragment
+    qui est ajouté plus tard à l'export). La passe est rapide (~O(n) avec
+    lookup set en O(1)) et logue le compte d'items écartés.
+    """
+    redlist = _load_redlist()
+    if not redlist:
+        return rows
+    kept: list[dict] = []
+    dropped = 0
+    for r in rows:
+        canon = _redlist_url_canon(r.get("url") or "")
+        if canon and canon in redlist:
+            dropped += 1
+            continue
+        kept.append(r)
+    if dropped:
+        import logging
+        logging.getLogger(__name__).info(
+            "site_export : %d items écartés par red list (config/redlist.yml)",
+            dropped,
+        )
+    return kept
+
+
 # R28 (2026-04-23) — Filtre « publications parlementaires ».
 # Sur la page /items/communiques/, le bucket family_source=parlement ne
 # doit lister QUE les rapports (AN + Sénat), pas les actualités RSS
@@ -2000,6 +2073,12 @@ def export(rows: list[dict], site_root: str | Path) -> dict:
     # publication visible. On le fait AVANT _fix_* (évite du travail inutile
     # sur des items qu'on va jeter de toute façon).
     rows = _filter_disabled_sources(rows)
+    # 2026-04-27 — red list explicite (config/redlist.yml). Permet de
+    # neutraliser un item précis (faux positif unique, homonymie) sans
+    # toucher au lexique. À placer après le filtre disabled_sources et
+    # avant les fixups idempotents (économie de calcul sur les items qu'on
+    # va jeter de toute façon).
+    rows = _filter_redlisted(rows)
     # R28 (2026-04-23) : dans la famille parlement x publications, on ne
     # garde que les rapports officiels (AN + Sénat). Les actualités RSS
     # Sénat (senat_rss) sont exclues de ce bucket (cf. docstring).

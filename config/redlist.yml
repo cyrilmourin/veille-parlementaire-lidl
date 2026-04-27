@@ -1,0 +1,75 @@
+# Red list — URLs explicitement exclues du site et du digest.
+#
+# Mécanisme : avant le rendu Hugo, les rows dont l'URL canonique
+# (sans scheme, sans fragment text-fragment, sans trailing slash)
+# matche une entrée de cette liste sont droppés.
+#
+# Quand utiliser la red list plutôt que de modifier le lexique ?
+#   - L'item est un faux positif unique malgré un lexique sain
+#     (cas tordu : co-occurrence accidentelle, fiche député qui
+#     mentionne incidemment un nom d'enseigne, etc.).
+#   - L'item resterait pertinent en théorie mais le contexte
+#     concret est hors GD (ex. amendement « char Leclerc » sur
+#     PJL militaire — Leclerc a un sens distinct ici).
+#
+# Quand modifier le lexique plutôt ? Quand le faux positif est
+# représentatif d'une famille (ex. « Autorité de la concurrence »
+# remontant régulièrement sur télécoms/médias/finance) — alors on
+# resserre le keyword globalement et la red list ne sert plus.
+#
+# Format : liste plate sous `urls:`. Une URL par ligne. Le scheme,
+# le fragment `#:~:text=…` et le trailing slash sont ignorés à la
+# comparaison.
+
+urls:
+  # ---------------------------------------------------------------------------
+  # Dossiers législatifs AN — faux positifs documentés (Cyril 2026-04-27).
+  # Le retrait de « Autorité de la concurrence » et « Loi ELAN » du lexique
+  # (P1d) prévient ces matches sur les nouveaux items, mais on garde la red
+  # list pour neutraliser les items déjà en cache DB en attendant le reset.
+  # ---------------------------------------------------------------------------
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N54136  # PPL concessions autoroutières
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N53329  # PPL monopoles médias
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N52768  # PPL fraude financière
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N53185  # PPL produits agricoles locaux restauration collective
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N52509  # PPL prévention batteries lithium / cartouches protoxyde
+  - https://www.assemblee-nationale.fr/dyn/17/dossiers/DLR5L17N52314  # PPL défaillances santé mentale et handicap
+
+  # ---------------------------------------------------------------------------
+  # Comptes rendus AN (séances plénières) — faux positifs documentés.
+  # Format URL = cr_ref (canonique stocké en DB par assemblee._fetch_xml_zip).
+  # ---------------------------------------------------------------------------
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/CRSANR5L17S2026O1N149  # Autorité concurrence
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/CRSANR5L17S2026O1N144  # DGCCRF hors GD
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/CRSANR5L17S2026O1N188  # Concurrence déloyale transport
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/CRSANR5L17S2026O1N175  # Concurrence déloyale
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/CRSANR5L17S2026O1N199  # Fournisseurs hors GD
+
+  # Variante URL slug-session (au cas où certains CR seraient stockés sous
+  # ce format — défensif, no-op sinon).
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/session-ordinaire-de-2025-2026/seance-du-lundi-15-decembre-2025
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/session-ordinaire-de-2025-2026/premiere-seance-du-jeudi-26-fevrier-2026
+  - https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/seance/session-ordinaire-de-2025-2026/deuxieme-seance-du-jeudi-09-avril-2026  # Faux positif Supermarchés (ne pas toucher au keyword)
+
+  # ---------------------------------------------------------------------------
+  # Amendements AN — char Leclerc (PJL programmation militaire 2024-2030).
+  # Cas typique d'homonymie : « Leclerc » désigne ici le char d'assaut, pas
+  # l'enseigne. Le matcher contextuel ne peut pas distinguer.
+  # ---------------------------------------------------------------------------
+  - https://www.assemblee-nationale.fr/dyn/17/amendements/AMANR5L17PO59046B2630P0D1N000345
+  - https://www.assemblee-nationale.fr/dyn/17/amendements/AMANR5L17PO59046B2630P0D1N000283
+
+  # ---------------------------------------------------------------------------
+  # Amendement Sénat — négociation commerciale hors GD.
+  # ---------------------------------------------------------------------------
+  - https://www.senat.fr/amendements/2025-2026/524/Amdt_271.html
+
+  # ---------------------------------------------------------------------------
+  # Question AN — franchise médicale (droit à mourir), hors GD.
+  # ---------------------------------------------------------------------------
+  - https://questions.assemblee-nationale.fr/q17/17-14597QE.htm
+
+  # ---------------------------------------------------------------------------
+  # Articles tiers — UFC Que Choisir comparateur télécoms (hors GD alimentaire).
+  # ---------------------------------------------------------------------------
+  - https://www.quechoisir.org/comparateur-forfait-mobile-n43896/

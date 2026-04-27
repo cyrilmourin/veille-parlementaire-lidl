@@ -183,9 +183,11 @@ theme_negociations:
   - SRP +10
   - Seuil de revente à perte
   - Encadrement des promotions
-  - Négociations commerciales
-  - Négociation commerciale
-  - Negociations commerciales
+  # 2026-04-27 (P1d) — « Négociations commerciales » / « Négociation
+  # commerciale » retirés du DIRECT car trop larges (B2B générique hors
+  # GD : énergie, télécoms, transport, etc.). Conservés uniquement dans
+  # la formulation longue P1a « Négociations commerciales dans la grande
+  # distribution » + comme requires_any de keywords plus stricts.
   - Box de négociation
   - Médiateur des relations commerciales agricoles
   - Mediateur des relations commerciales agricoles
@@ -224,52 +226,87 @@ theme_negociations:
   # --- Contextuel -----------------------------------------------------------
   # EGalim : contextualisé car le terme circule aussi pour l'agriculture
   # pure (producteurs, filières) sans que la distribution soit concernée.
+  # 2026-04-27 (P1d) — resserrement après faux positifs (PPL « Renforcer
+  # la part de produits agricoles locaux dans la restauration collective
+  # publique » matchait via EGalim + agriculture amont). On retire les
+  # validateurs ambigus (distributeur seul, enseigne seule, négociation
+  # commerciale, centrale d'achat, marge commerciale, contrat amont qui
+  # circulent dans l'amont) et on n'admet plus QUE des signaux GD-aval
+  # hyper-distinctifs : grande distribution, GD alimentaire, hard-discount,
+  # noms d'enseignes alimentaires, SRP+10, Descrozaille, EGalim 3, MDD.
   - term: EGalim
     mode: contextual
     requires_any:
       - grande distribution
-      - distributeur
-      - enseigne
-      - négociation commerciale
-      - Negociations commerciales
-      - centrale d'achat
+      - grande distribution alimentaire
+      - hard-discount
+      - discount alimentaire
+      - marque de distributeur
       - SRP+10
-      - marge commerciale
-      - contrat amont
+      - EGalim 3
+      - Loi EGalim 3
+      - Descrozaille
+      - MDD
       - Lidl
-      - Carrefour Market
-      - E.Leclerc
-      - Intermarché
-      - Auchan
       - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+      - Carrefour Market
 
   - term: Egalim
     mode: contextual
     requires_any:
       - grande distribution
-      - distributeur
-      - enseigne
-      - négociation commerciale
-      - centrale d'achat
+      - grande distribution alimentaire
+      - hard-discount
+      - discount alimentaire
+      - marque de distributeur
       - SRP+10
-      - contrat amont
+      - EGalim 3
+      - Loi EGalim 3
+      - Descrozaille
+      - MDD
       - Lidl
-      - Carrefour Market
-      - E.Leclerc
-      - Intermarché
-      - Auchan
       - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+      - Carrefour Market
 
   - term: E-Galim
     mode: contextual
     requires_any:
       - grande distribution
-      - distributeur
-      - enseigne
-      - négociation commerciale
-      - centrale d'achat
+      - grande distribution alimentaire
+      - hard-discount
+      - discount alimentaire
+      - marque de distributeur
       - SRP+10
-      - contrat amont
+      - EGalim 3
+      - Loi EGalim 3
+      - Descrozaille
+      - MDD
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
   - term: Loi EGalim 1
     mode: direct
@@ -387,26 +424,14 @@ theme_negociations:
       - SRP+10
       - MDD
 
-  - term: Fournisseurs
-    mode: contextual
-    requires_any:
-      - Lidl
-      - Aldi
-      - Auchan
-      - Intermarché
-      - Monoprix
-      - Franprix
-      - Système U
-      - E.Leclerc
-      - groupe Carrefour
-      - groupe Casino
-      - grande distribution alimentaire
-      - commerce de détail alimentaire
-      - centrale d'achat
-      - EGalim 3
-      - Descrozaille
-      - SRP+10
-      - MDD
+  # 2026-04-27 (P1d) — « Fournisseurs » retiré entièrement du lexique. Trop
+  # générique : tout texte législatif sur les marchés publics, l'industrie,
+  # l'énergie, etc. mentionne « fournisseurs » avec des co-occurrences GD
+  # accidentelles dans un long haystack. Demande Cyril après faux positif
+  # CR plénière CRSANR5L17S2026O1N199. Les vrais textes GD-fournisseurs
+  # sont déjà captés par Loi Descrozaille, SRP+10, EGalim 3, ou les
+  # formulations longues P1a (« Équilibre dans les relations commerciales
+  # entre fournisseurs et distributeurs »).
 
   - term: Relations commerciales
     mode: contextual
@@ -469,10 +494,15 @@ theme_urbanisme:
   - Drive piéton
   - Friches commerciales
   - Friche commerciale
-  - Loi ELAN
   # Note : ZAN / zéro artificialisation nette retirés du lexique
   # (demande Cyril 2026-04-24 — le sujet est trop transversal pour
   # générer un signal exploitable côté grande distribution).
+  # 2026-04-27 (P1d) — « Loi ELAN » retirée du direct : trop transversale
+  # (logement, urbanisme, social, etc.). Faux positif sur PPL « Défaillances
+  # des politiques publiques de prise en charge de la santé mentale »
+  # qui mentionnait ELAN incidemment. Les volets ELAN GD (CDAC, exploitation
+  # commerciale) restent captés par les keywords dédiés CDAC / Autorisation
+  # d'exploitation commerciale / Urbanisme commercial.
 
 # ============================================================================
 # THEME — travail et temps d'ouverture
@@ -490,45 +520,59 @@ theme_travail:
   # --- Contextuel -----------------------------------------------------------
   # Travail dominical + ouverture dominicale : contextualisés car
   # citations fréquentes en santé / hôtellerie / transport.
+  # 2026-04-27 (P1d) — resserrement après faux positif CR plénière
+  # 15/12/2025. On retire les validateurs trop génériques (commerce de
+  # détail seul, magasin, enseigne, commerce alimentaire seul) qui
+  # remontent dans des contextes hôtellerie / restauration / culture.
+  # On exige un signal GD-aval distinctif : grande distribution + variantes,
+  # commerce de détail alimentaire, supermarché/hypermarché, ou nom
+  # d'enseigne alimentaire.
   - term: Travail dominical
     mode: contextual
     requires_any:
-      - commerce de détail
       - grande distribution
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - hard-discount
       - supermarché
       - hypermarché
-      - distribution alimentaire
-      - magasin
-      - enseigne
-      - commerce alimentaire
       - Lidl
-      - Carrefour
+      - Aldi
       - Auchan
-      - Leclerc
       - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
   - term: Ouverture dominicale
     mode: contextual
     requires_any:
-      - commerce de détail
       - grande distribution
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - hard-discount
       - supermarché
       - hypermarché
-      - distribution alimentaire
-      - magasin
-      - enseigne
-      - commerce alimentaire
       - Lidl
-      - Carrefour
+      - Aldi
       - Auchan
-      - Leclerc
       - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
   - term: Code du travail
     mode: contextual
     requires_any:
       - grande distribution
-      - commerce de détail
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
       - supermarché
       - hypermarché
 
@@ -544,10 +588,11 @@ theme_produits:
   - Eco-score
   - Ecoscore
   - Affichage environnemental
-  - REP emballages
-  - Responsabilité élargie du producteur emballages
-  - Consigne des emballages
-  - Consigne emballage
+  # 2026-04-27 (P1d) — « REP emballages » et variantes passés en
+  # contextual après faux positif PPL « Renforcer la prévention des
+  # risques d'accidents liés aux batteries au lithium et aux cartouches
+  # de protoxyde d'azote » (matchait sur « emballage » seul). On exige
+  # un marqueur GD-alimentaire pour valider.
   - Origine France
   - Etiquetage origine
   - Étiquetage origine
@@ -558,6 +603,70 @@ theme_produits:
   - RappelConso
 
   # --- Contextuel -----------------------------------------------------------
+  # 2026-04-27 (P1d) — REP emballages et variantes : exiger un signal
+  # GD-alimentaire pour valider. Sans ça, la moindre PPL traitant des
+  # piles, batteries, équipements électriques (qui ont leur propre REP)
+  # remonte par co-occurrence avec « emballage ».
+  - term: REP emballages
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - grande distribution alimentaire
+      - commerce alimentaire
+      - commerce de détail alimentaire
+      - distribution alimentaire
+      - emballage alimentaire
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+
+  - term: Responsabilité élargie du producteur emballages
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - grande distribution alimentaire
+      - commerce alimentaire
+      - commerce de détail alimentaire
+      - distribution alimentaire
+      - emballage alimentaire
+
+  - term: Consigne des emballages
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - grande distribution alimentaire
+      - commerce alimentaire
+      - commerce de détail alimentaire
+      - distribution alimentaire
+      - emballage alimentaire
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
+
+  - term: Consigne emballage
+    mode: contextual
+    requires_any:
+      - grande distribution
+      - grande distribution alimentaire
+      - commerce alimentaire
+      - commerce de détail alimentaire
+      - distribution alimentaire
+      - emballage alimentaire
+
   # Loi AGEC : très vaste, couvre tout le sujet déchets au-delà de
   # l'emballage alimentaire.
   - term: Loi AGEC
@@ -603,26 +712,33 @@ theme_produits:
 
   # DGCCRF : très souvent cité pour des contrôles non-GD (santé, pharma,
   # hôtellerie, auto, travaux, etc.). Contextualisé.
+  # 2026-04-27 (P1d) — resserrement après faux positif CR plénière
+  # CRSANR5L17S2026O1N144 (DGCCRF + alimentaire dans contexte cantines /
+  # sécurité alim hors GD). On retire les validateurs trop génériques
+  # (alimentaire, alimentation, distributeur, enseigne, commerce de détail
+  # sans alimentaire, négociation commerciale) et on garde uniquement les
+  # signaux GD-aval distinctifs.
   - term: DGCCRF
     mode: contextual
     requires_any:
       - grande distribution
-      - alimentaire
-      - alimentation
-      - distributeur
-      - enseigne
-      - commerce de détail
-      - négociation commerciale
-      - Lidl
-      - Carrefour
-      - Leclerc
-      - Intermarché
-      - Auchan
-      - Casino
-      - Aldi
-      - Monoprix
+      - grande distribution alimentaire
+      - hard-discount
+      - commerce de détail alimentaire
       - rappel produit
       - SRP+10
+      - EGalim 3
+      - Descrozaille
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
   - term: DGAL
     mode: contextual
@@ -648,38 +764,85 @@ theme_produits:
 # ============================================================================
 theme_concurrence:
   # --- Direct ---------------------------------------------------------------
-  - Autorité de la concurrence
+  # 2026-04-27 (P1d) — « Autorité de la concurrence » retirée du direct.
+  # Trop large : remonte régulièrement sur dossiers télécoms, médias,
+  # autoroutes, finance, etc. Faux positifs documentés (Cyril) :
+  #   - PPL concessions autoroutières (DLR5L17N54136)
+  #   - PPL monopoles médias (DLR5L17N53329)
+  #   - PPL fraude financière (DLR5L17N52768)
+  # Les vrais sujets ADLC × GD restent captés via le filtre keyword GD
+  # appliqué directement à la source `autorite_concurrence` (cf. main.py,
+  # sortie de _apply_source_bypass), couplée aux mots-clés GD spécifiques.
   - Carburant à prix coûtant
   - Prix coûtant
 
   # --- Contextuel -----------------------------------------------------------
+  # 2026-04-27 (P1d) — Franchise resserré après faux positif sur QE AN
+  # « Droit à mourir » (mot « franchise » dans contexte santé / fiscalité).
+  # On retire les validateurs trop larges (distributeur, enseigne, commerce
+  # de détail, contrat de franchise — qui circulent en assurance, banque,
+  # télécoms). On exige un signal GD-aval distinctif.
   - term: Franchise
     mode: contextual
     requires_any:
       - grande distribution
-      - commerce de détail
-      - distributeur
-      - enseigne
-      - contrat de franchise
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - hard-discount
+      - franchise alimentaire
+      - franchise commerce de détail alimentaire
       - Lidl
-      - Carrefour
-      - Leclerc
+      - Aldi
+      - Auchan
       - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
   - term: Contrat de franchise
     mode: contextual
     requires_any:
       - grande distribution
-      - commerce de détail
-      - distributeur
-      - enseigne
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - hard-discount
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
+  # 2026-04-27 (P1d) — Concurrence déloyale resserré après 3 faux positifs
+  # CR plénière (CRSANR5L17S2026O1N188, séance 26/02/2026 1re,
+  # CRSANR5L17S2026O1N175). Trop générique seul. On exige un signal GD-aval.
   - term: Concurrence déloyale
     mode: contextual
     requires_any:
       - grande distribution
-      - distributeur
-      - enseigne
+      - grande distribution alimentaire
+      - commerce de détail alimentaire
+      - hard-discount
+      - SRP+10
+      - EGalim 3
+      - Descrozaille
+      - Lidl
+      - Aldi
+      - Auchan
+      - Intermarché
+      - Monoprix
+      - Franprix
+      - Système U
+      - E.Leclerc
+      - groupe Carrefour
+      - groupe Casino
 
 # ============================================================================
 # THEME — outre-mer (strict — volet grande distribution uniquement)

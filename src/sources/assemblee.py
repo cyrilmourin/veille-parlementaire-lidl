@@ -359,19 +359,21 @@ def _fetch_xml_zip(src: dict) -> list[Item]:
         else:
             url = "https://www.assemblee-nationale.fr/dyn/17/comptes-rendus"
 
-        # Titre : on veut évoquer le thème du débat. Ordre de priorité :
-        #   1) thème Syceron (« Présidence de … <OBJET> 0 … ») — fiable
-        #   2) thème générique extract_cr_theme (motifs « projet de loi… »)
-        #   3) fallback date + mention CR intégral
+        # Titre : 2026-04-27 — simplifié sur demande Cyril. Avant : on
+        # tentait de remonter un thème (1er point d'ODJ via _SYCERON_THEME_RE
+        # ou extract_cr_theme). Problème : le thème extrait correspondait
+        # quasi systématiquement au PREMIER point de l'ordre du jour de la
+        # séance, alors que l'occurrence du keyword qui justifie le match
+        # (gaspillage alimentaire, EGalim, etc.) pouvait être beaucoup
+        # plus loin dans la séance — d'où des titres trompeurs sur le site.
+        # On reste désormais générique : « Séance AN du JJ/MM/AAAA — Compte
+        # rendu intégral ». Le snippet (centré sur le 1er match) + le
+        # text-fragment dans l'URL donnent le contexte précis au lecteur.
+        # Le thème reste exposé dans `raw["theme"]` pour audit / debug.
         theme = syceron_theme or extract_cr_theme(text)
-        # Indicateur : la date vient-elle bien du timestamp et pas du Zip ?
         date_is_from_seance = ts_dt is not None
-        if date_is_from_seance and theme:
-            title = f"Séance AN du {published_at:%d/%m/%Y} — {theme}"[:220]
-        elif date_is_from_seance:
+        if date_is_from_seance:
             title = f"Séance AN du {published_at:%d/%m/%Y} — Compte rendu intégral"[:220]
-        elif theme:
-            title = f"Séance AN — {theme}"[:220]
         elif cr_ref:
             title = f"Compte rendu AN — séance {cr_ref}"[:220]
         else:
