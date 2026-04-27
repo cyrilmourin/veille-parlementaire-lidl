@@ -1,4 +1,12 @@
-"""Tests unitaires du matcher de mots-clés."""
+"""Tests unitaires du matcher de mots-clés.
+
+2026-04-27 : tests transposés du fork sport vers le lexique Lidl
+(grande distribution alimentaire). Les anciens noms (`dispositif`,
+`evenement`, `federation`) référençaient des familles sport qui
+n'existent pas dans le lexique Lidl ; ils sont renommés vers les
+familles Lidl correspondantes (`theme_negociations`, `theme_outremer`,
+`acteur`).
+"""
 from pathlib import Path
 
 import pytest
@@ -16,30 +24,37 @@ def m():
 
 def test_normalize_accents():
     assert _normalize("Éducation physique et sportive") == "education physique et sportive"
-    assert _normalize("  Pass'Sport  ") == "pass'sport"
+    # Ponctuation interne préservée (mots avec tiret).
+    assert _normalize("  Hard-Discount  ") == "hard-discount"
 
 
-def test_match_dispositif(m):
-    kws, fams = m.match("Élargissement du dispositif Pass'Sport aux jeunes")
-    assert "Pass'Sport" in kws
-    assert "dispositif" in fams
+def test_match_theme_negociations(m):
+    """Un texte mentionnant Loi Descrozaille matche le keyword direct
+    + la famille theme_negociations."""
+    kws, fams = m.match("Bilan d'application de la Loi Descrozaille deux ans après")
+    assert "Loi Descrozaille" in kws
+    assert "theme_negociations" in fams
 
 
 def test_match_acteur(m):
-    kws, fams = m.match("Audition du président du CNOSF")
-    assert "CNOSF" in kws
+    """Lidl est un keyword direct de la famille acteur."""
+    kws, fams = m.match("Audition du PDG de Lidl France à l'Assemblée")
+    assert "Lidl" in kws
     assert "acteur" in fams
 
 
-def test_match_federation(m):
-    kws, _ = m.match("Réforme de la FFR et de la LFP")
-    assert "FFR" in kws and "LFP" in kws
+def test_match_multiple_acteurs(m):
+    """Plusieurs enseignes simultanées sont toutes capturées."""
+    kws, _ = m.match("Réforme du circuit Lidl et Auchan dans la grande distribution")
+    assert "Lidl" in kws and "Auchan" in kws
 
 
-def test_match_evenement(m):
-    kws, fams = m.match("Projet Alpes 2030 et héritage Paris 2024")
-    assert "Alpes 2030" in kws
-    assert "evenement" in fams
+def test_match_theme_outremer(m):
+    """BQP est un keyword direct hyper-spécifique de la famille
+    theme_outremer (bouclier qualité prix)."""
+    kws, fams = m.match("Mise à jour du dispositif BQP outre-mer")
+    assert "BQP" in kws
+    assert "theme_outremer" in fams
 
 
 def test_no_match_unrelated(m):
@@ -49,29 +64,27 @@ def test_no_match_unrelated(m):
 
 def test_recapitalize_maps_legacy_lowercase_kws_to_yaml_form(m):
     """Les items pré-R13-B ont des kws stockés en minuscules non-accentuées.
-    `recapitalize` les remappe sur la forme du yaml courant (capitalisée).
-    """
-    out = m.recapitalize(
-        ["jeux olympiques", "activite physique adaptee", "cnosf"]
-    )
+    `recapitalize` les remappe sur la forme du yaml courant (capitalisée)."""
+    out = m.recapitalize(["lidl", "egalim", "srp+10", "auchan"])
     # Chaque élément retrouve sa forme canonique (capitalisée ou sigle).
-    assert "Jeux olympiques" in out
-    assert "Activité physique adaptée" in out
-    assert "CNOSF" in out
+    assert "Lidl" in out
+    assert "EGalim" in out
+    assert "SRP+10" in out
+    assert "Auchan" in out
     # Aucun doublon même si plusieurs variantes de casse sont passées.
     assert len(out) == len(set(out))
 
 
 def test_recapitalize_preserves_order_and_dedupes(m):
-    out = m.recapitalize(["CNOSF", "cnosf", "CNOSF"])
-    assert out == ["CNOSF"]
+    out = m.recapitalize(["Lidl", "lidl", "LIDL"])
+    assert out == ["Lidl"]
 
 
 def test_recapitalize_leaves_unknown_kws_untouched(m):
     """Un kw absent du yaml (ex. source externe, ancien yaml) reste tel quel."""
-    out = m.recapitalize(["Mot-inconnu-XYZ", "CNOSF"])
+    out = m.recapitalize(["Mot-inconnu-XYZ", "Lidl"])
     assert "Mot-inconnu-XYZ" in out
-    assert "CNOSF" in out
+    assert "Lidl" in out
 
 
 def test_recapitalize_empty_input(m):

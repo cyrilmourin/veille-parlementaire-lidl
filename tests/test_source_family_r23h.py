@@ -63,20 +63,8 @@ def test_family_min_education():
 
 # ---------- autorites -----------------------------------------------------
 
-def test_family_anj():
-    assert _source_family("anj", "ANJ") == "autorites"
-
-
-def test_family_arcom():
-    assert _source_family("arcom", "ARCOM") == "autorites"
-
-
 def test_family_autorite_concurrence():
     assert _source_family("autorite_concurrence", "AdlC") == "autorites"
-
-
-def test_family_conseil_constit():
-    assert _source_family("conseil_constit_decisions", "CC") == "autorites"
 
 
 def test_family_conseil_etat():
@@ -87,42 +75,11 @@ def test_family_ccomptes():
     assert _source_family("ccomptes_publications", "CourComptes") == "autorites"
 
 
-# ---------- operateurs_publics (R23-O + R25-F) ---------------------------
-
-def test_family_ans():
-    assert _source_family("ans", "ANS") == "operateurs_publics"
-
-
-def test_family_injep():
-    assert _source_family("injep", "INJEP") == "operateurs_publics"
-
-
-def test_family_insep():
-    assert _source_family("insep", "INSEP") == "operateurs_publics"
-
-
-def test_family_afld():
-    """R25-F (2026-04-23) : AFLD = EPA sport, pas AAI → operateurs_publics."""
-    assert _source_family("afld", "AFLD") == "operateurs_publics"
-
-
-def test_family_igesr():
-    """R25-F (2026-04-23) : IGESR = inspection État, reclassée opérateurs."""
-    assert _source_family("igesr_rapports", "MinESR") == "operateurs_publics"
-
-
-# ---------- mouvement_sportif (R23-O) ------------------------------------
-
-def test_family_cnosf():
-    assert _source_family("cnosf", "CNOSF") == "mouvement_sportif"
-
-
-def test_family_france_paralympique():
-    assert _source_family("france_paralympique", "CPSF") == "mouvement_sportif"
-
-
-def test_family_fdsf():
-    assert _source_family("fdsf", "FDSF") == "mouvement_sportif"
+# 2026-04-27 : tests `operateurs_publics` (ANS, INSEP, INJEP, AFLD, IGESR)
+# et `mouvement_sportif` (CNOSF, France paralympique, FDSF) supprimés —
+# ces familles sont sport-specifics et ne sont pas peuplées côté Lidl.
+# Le fallback `autres` couvre les cas où le helper rencontrerait un
+# source_id non mappé.
 
 
 # ---------- jorf ---------------------------------------------------------

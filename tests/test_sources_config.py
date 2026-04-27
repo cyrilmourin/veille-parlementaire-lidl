@@ -86,43 +86,29 @@ def test_all_sources_have_category(cfg):
 
 
 def test_all_sources_have_url(cfg):
-    for _g, s in _iter_sources(cfg):
-        url = s.get("url", "")
-        assert url.startswith("http"), (
-            f"source {s['id']} URL invalide : {url!r}"
-        )
-
-
-def test_aai_sport_sources_present_and_enabled(cfg):
-    """Régression : les 4 AAI cœur de cible sport doivent rester actives.
-
-    ANS (Agence nationale du Sport), AFLD (anti-dopage), ARCOM (droits
-    TV sport, paris sportifs), ANJ (paris sportifs, sport betting) sont
-    les 4 AAI dont Cyril scrute les communiqués. Si l'une est
-    désactivée, le test échoue pour forcer une review.
+    """Chaque source DOIT avoir soit `url`, soit `url_template` (P7 — URLs
+    agnostiques de législature pour les dumps AN). Avant 2026-04-25, seul
+    `url` existait ; maintenant les sources AN utilisent un placeholder
+    `{legislature}` qui est expansé par normalize._expand_legislature_templates.
     """
-    must_be_active = {"ans", "afld", "arcom", "anj"}
-    active_ids = {
-        s["id"] for _g, s in _iter_sources(cfg)
-        if s.get("enabled") is not False
-    }
-    missing = must_be_active - active_ids
-    assert not missing, (
-        f"AAI sport désactivées ou absentes : {missing} — "
-        "si c'est intentionnel, retirer du test"
-    )
+    for _g, s in _iter_sources(cfg):
+        url = s.get("url", "") or s.get("url_template", "") or ""
+        assert url.startswith("http"), (
+            f"source {s['id']} URL invalide : {url!r} "
+            f"(ni `url` ni `url_template` ne commence par http)"
+        )
 
 
 def test_high_jurisdictions_configured(cfg):
     """Les hautes juridictions dans le scope doivent avoir une entrée YAML.
-    R22 (2026-04-23) : Cour de cassation retirée du scope (site JS-only
-    insurmontable, aucun flux RSS exposé côté officiel). Cf. AUDIT_R19.md §7.
+    R22 (2026-04-23) : Cour de cassation retirée du scope (site JS-only,
+    aucun flux RSS exposé côté officiel).
+    Côté Lidl, seul le Conseil d'État est conservé (rapports et décisions
+    sur les concentrations GMS, contentieux CDAC). Le Conseil constitutionnel
+    n'a pas d'historique de décisions GD pertinentes — sources non incluses.
     """
     all_ids = {s["id"] for _g, s in _iter_sources(cfg)}
     assert "conseil_etat" in all_ids
-    assert "conseil_constit_actualites" in all_ids
-    assert "conseil_constit_decisions" in all_ids
-    # Cour de cassation volontairement non listée (R22).
 
 
 def test_dispatch_covers_all_enabled_sources(cfg):
@@ -134,61 +120,6 @@ def test_dispatch_covers_all_enabled_sources(cfg):
             continue
         fn = normalize._dispatch(group, src)
         assert callable(fn), f"pas de handler pour {src['id']}"
-
-
-def test_r23ij_insep_fdsf_present(cfg):
-    """R23-I + R23-J (2026-04-23) — opérateurs et fondations sport ajoutés.
-
-    - INSEP : établissement public MinSports, flux RSS Drupal /fr/actualites.xml,
-      poids 3 (cœur de cible).
-    - FDSF  : fondation reconnue d'utilité publique adossée au CNOSF, flux
-      RSS Squarespace via ?format=rss sur le blog /web/fsf/actualites.
-
-    Garde-fou : régression si l'un est désactivé ou si quelqu'un change
-    l'URL sans vérifier. Les deux doivent rester en `format: rss` (pas
-    scrape HTML — le RSS officiel est beaucoup plus fiable).
-    """
-    by_id = {s["id"]: s for _g, s in _iter_sources(cfg)}
-    assert "insep" in by_id, "source insep manquante (R23-I)"
-    assert "fdsf" in by_id, "source fdsf manquante (R23-J)"
-    insep = by_id["insep"]
-    fdsf = by_id["fdsf"]
-    assert insep.get("format") == "rss", (
-        "insep doit rester en format rss (/fr/actualites.xml est un RSS "
-        "Drupal natif, pas besoin de scrape HTML)"
-    )
-    assert fdsf.get("format") == "rss", (
-        "fdsf doit rester en format rss (?format=rss est le feed Squarespace "
-        "natif, pas besoin de scrape HTML du listing rendu en JS)"
-    )
-    assert insep.get("enabled", True) is not False, "insep désactivé"
-    assert fdsf.get("enabled", True) is not False, "fdsf désactivé"
-    # L'URL INSEP DOIT finir par .xml (c'est le suffixe magique Drupal
-    # Views pour export RSS — /fr/actualites tout court renvoie le HTML).
-    assert insep["url"].endswith(".xml"), (
-        f"insep URL doit finir par .xml : {insep['url']!r}"
-    )
-    # L'URL FDSF DOIT contenir `?format=rss` (suffixe magique Squarespace).
-    assert "format=rss" in fdsf["url"], (
-        f"fdsf URL doit contenir format=rss : {fdsf['url']!r}"
-    )
-
-
-def test_r23i_insep_chamber_mapping():
-    """R23-I : le domaine insep.fr doit mapper vers le badge 'INSEP'.
-
-    Sans ce mapping explicite, _chamber() retomberait sur le fallback
-    domaine (qui n'est pas .gouv.fr) → badge "Insep.fr" parasite."""
-    from src.sources.html_generic import _chamber
-    assert _chamber("www.insep.fr") == "INSEP"
-    assert _chamber("insep.fr") == "INSEP"
-
-
-def test_r23j_fdsf_chamber_mapping():
-    """R23-J : le domaine fondation-du-sport-francais.fr → 'FDSF'."""
-    from src.sources.html_generic import _chamber
-    assert _chamber("www.fondation-du-sport-francais.fr") == "FDSF"
-    assert _chamber("fondation-du-sport-francais.fr") == "FDSF"
 
 
 def test_senat_agenda_uses_daily_format(cfg):

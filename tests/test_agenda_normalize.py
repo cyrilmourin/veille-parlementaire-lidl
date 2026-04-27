@@ -152,9 +152,13 @@ def test_normalize_agenda_commission_audition():
     assert it.title.startswith("Audition de M. Alain Dupuy"), it.title
     assert it.published_at.date().isoformat() == "2025-06-11"
 
-    # URL : pas de compteRenduRef → lien vers agenda par jour
-    assert "agenda" in it.url.lower(), it.url
-    assert "2025-06-11" in it.url
+    # URL : pas de compteRenduRef → fallback vers la fiche organe
+    # (`/dyn/17/organes/<organeReuniRef>`). C'est la résolution actuelle
+    # de _normalize_agenda côté Lidl : on évite de pointer vers l'agenda
+    # par jour (souvent vide ou rapide à péremer côté AN) au profit de
+    # la fiche organe qui reste stable.
+    assert "/organes/" in it.url.lower(), it.url
+    assert "po861472" in it.url.lower(), it.url
 
     assert it.raw["xsi_type"] == "reunioncommission_type"
 

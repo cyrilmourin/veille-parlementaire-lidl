@@ -25,17 +25,19 @@ from src.site_export import (  # noqa: E402
 def test_load_disabled_source_ids_reads_real_yaml():
     """Sentinelle : lit le vrai config/sources.yml et vérifie que les
     sources marquées `enabled: false` remontent. Test de régression si
-    quelqu'un casse le chemin du fichier ou la structure YAML."""
+    quelqu'un casse le chemin du fichier ou la structure YAML.
+
+    2026-04-27 : transposé du fork sport. Côté Lidl ces deux sources
+    sont stables `enabled: false` (cf. HANDOFF prio moyenne) :
+      - senat_agenda : SPA AngularJS, 0 item depuis R15
+      - ademe_publications : URL en cours de revue
+    """
     disabled = _load_disabled_source_ids()
-    # Au 2026-04-23, ces IDs sont documentés `enabled: false` :
-    # - alpes_2030_news (R17, source Google News écartée)
-    # - senat_theme_sport_rss (R19-B, flux RSS thème Sport qui produisait
-    #   des doublons de pjl24-630)
-    assert "alpes_2030_news" in disabled, (
-        "alpes_2030_news devrait être dans les sources disabled"
+    assert "senat_agenda" in disabled, (
+        "senat_agenda devrait être dans les sources disabled"
     )
-    assert "senat_theme_sport_rss" in disabled, (
-        "senat_theme_sport_rss devrait être dans les sources disabled"
+    assert "ademe_publications" in disabled, (
+        "ademe_publications devrait être dans les sources disabled"
     )
 
 
@@ -43,18 +45,18 @@ def test_filter_removes_rows_from_disabled_source():
     """Un row avec `source_id` matchant une source disabled doit être
     exclu. Un row d'une source active doit passer."""
     rows = [
-        {"uid": "a", "source_id": "alpes_2030_news", "title": "Google News item"},
-        {"uid": "b", "source_id": "an_dosleg", "title": "Dossier AN"},
-        {"uid": "c", "source_id": "senat_theme_sport_rss", "title": "Sénat RSS"},
+        {"uid": "a", "source_id": "senat_agenda", "title": "Agenda Sénat (SPA)"},
+        {"uid": "b", "source_id": "an_dossiers_legislatifs", "title": "Dossier AN"},
+        {"uid": "c", "source_id": "ademe_publications", "title": "ADEME publication"},
     ]
     with patch(
         "src.site_export._load_disabled_source_ids",
-        return_value={"alpes_2030_news", "senat_theme_sport_rss"},
+        return_value={"senat_agenda", "ademe_publications"},
     ):
         kept = _filter_disabled_sources(rows)
     kept_ids = {r["uid"] for r in kept}
     assert kept_ids == {"b"}, (
-        f"attendu uniquement 'b' (an_dosleg), vu {kept_ids}"
+        f"attendu uniquement 'b' (an_dossiers_legislatifs), vu {kept_ids}"
     )
 
 
@@ -77,11 +79,11 @@ def test_filter_handles_missing_source_id_gracefully():
     rows = [
         {"uid": "a"},
         {"uid": "b", "source_id": ""},
-        {"uid": "c", "source_id": "alpes_2030_news"},
+        {"uid": "c", "source_id": "senat_agenda"},
     ]
     with patch(
         "src.site_export._load_disabled_source_ids",
-        return_value={"alpes_2030_news"},
+        return_value={"senat_agenda"},
     ):
         kept = _filter_disabled_sources(rows)
     kept_ids = {r["uid"] for r in kept}

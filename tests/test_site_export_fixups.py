@@ -491,27 +491,33 @@ def test_amendement_chip_noop_on_non_dict():
 # ---------- _load : recapitalize matched_keywords (R13-B backfill) ----------
 
 def test_load_recapitalizes_legacy_matched_keywords():
-    """Les items pré-R13-B ont des kws en minuscules unidecodées → remappés."""
+    """Les items pré-R13-B ont des kws en minuscules unidecodées → remappés.
+
+    2026-04-27 : transposé du fork sport. Couvre le même mécanisme avec
+    des kws Lidl (lidl, egalim, auchan) au lieu de kws sport.
+    """
     import json
     row = {
         "category": "questions",
-        "title": "Question sport",
+        "title": "Question grande distribution",
         "summary": "",
         "matched_keywords": json.dumps(
-            ["jeux olympiques", "activite physique adaptee"]
+            ["lidl", "egalim", "auchan"]
         ),
-        "keyword_families": json.dumps(["evenement", "dispositif"]),
+        "keyword_families": json.dumps(["acteur", "theme_negociations"]),
         "raw": "{}",
     }
     out = list(_load([row]))
     assert len(out) == 1
     kws = out[0]["matched_keywords"]
-    # Les deux kws ont récupéré leur forme canonique du yaml.
-    assert "Jeux olympiques" in kws
-    assert "Activité physique adaptée" in kws
+    # Chaque kw a récupéré sa forme canonique du yaml.
+    assert "Lidl" in kws
+    assert "EGalim" in kws
+    assert "Auchan" in kws
     # Aucun résidu en minuscule.
-    assert "jeux olympiques" not in kws
-    assert "activite physique adaptee" not in kws
+    assert "lidl" not in kws
+    assert "egalim" not in kws
+    assert "auchan" not in kws
 
 
 # ---------- _fix_chamber_row (R13-G : Www → MinXXX) ------------------------
