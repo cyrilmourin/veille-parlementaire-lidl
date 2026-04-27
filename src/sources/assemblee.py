@@ -1785,5 +1785,12 @@ def _normalize_agenda(obj, src, cat):
             "organe_label": organe_label,
             "lieu": lieu,
             "xsi_type": xsi_type,
+            # 2026-04-27 — liste complète des titres collectés (1 par
+            # sous-événement / point ODJ / audition). Consommée par
+            # `_fix_agenda_row` côté export pour basculer le titre vers
+            # le sous-événement qui contient effectivement le keyword
+            # matché — sinon le titre n'affichait que le PREMIER point
+            # de l'ODJ même si le keyword apparaissait au 5e ou 10e.
+            "all_titles": titles,
         },
     )

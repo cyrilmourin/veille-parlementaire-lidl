@@ -257,8 +257,23 @@ def _fetch_silent(url: str, timeout: float = 20.0) -> tuple[int, bytes]:
 
 
 def _fetch_cr(slug: str, session: str, num: int,
-              commission_label: str) -> Item | None:
-    """Tente de récupérer un CR (slug, session, num). None si inexistant."""
+              commission_label: str) -> tuple[Item | None, bool]:
+    """Tente de récupérer un CR (slug, session, num).
+
+    Renvoie un tuple `(item, has_body)` :
+      - `item` : Item ingéré, ou None si la page HTML est introuvable (404).
+      - `has_body` : True si le PDF a été récupéré ET extrait avec succès
+        (body non trivialement vide). False si HTML 200 mais PDF 404 ou body
+        vide — l'item est créé quand même mais avec haystack_body="".
+
+    2026-04-27 — `has_body` exposé pour permettre à `fetch_source` de NE PAS
+    marquer le numéro comme `scanned` quand le PDF n'est pas encore publié.
+    Cas réel : audition Dominique Schelcher (14/04/2026, cion-eco N076)
+    annoncée à l'agenda mais dont le PDF n'a été publié que 1-2 semaines
+    après la séance. Le scraper voyait HTML 200 + PDF 404 → ingérait un
+    Item à body vide → matched_keywords=[] → exclu du site, MAIS num
+    marqué scanned → jamais ré-ingéré quand le PDF est apparu.
+    """
     base = (
         f"https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/"
         f"{slug}/l17{slug}{session}{num:03d}_compte-rendu"
@@ -269,14 +284,17 @@ def _fetch_cr(slug: str, session: str, num: int,
     # 1) Vérifier que la page HTML existe (200). 404 → CR pas publié.
     status, html_content = _fetch_silent(html_url)
     if status != 200 or not html_content:
-        return None
+        return None, False
     html_text = html_content.decode("utf-8", errors="replace")
 
     # 2) Récupérer le PDF (source du corps). Best-effort : si 404 ou erreur,
     #    on expose quand même un item avec haystack_body vide plutôt que de
-    #    rien renvoyer (la page HTML existe, donc le CR est référencé).
+    #    rien renvoyer (la page HTML existe, donc le CR est référencé). Mais
+    #    on retourne `has_body=False` pour indiquer qu'il faudra ré-essayer
+    #    au prochain run (le PDF est probablement publié en différé).
     pdf_status, pdf_bytes = _fetch_silent(pdf_url, timeout=30.0)
     body = _extract_pdf_text(pdf_bytes) if pdf_status == 200 else ""
+    has_body = pdf_status == 200 and len(body) >= 200
 
     # 3) Date : on cherche d'abord dans le PDF (page de garde), sinon dans
     #    le HTML, sinon on pose "aujourd'hui" (le CR vient d'être publié).
@@ -293,7 +311,7 @@ def _fetch_cr(slug: str, session: str, num: int,
     # Summary : début du corps pour l'affichage site (fallback: titre).
     summary = (body[:2000] if body else title).strip()
 
-    return Item(
+    item = Item(
         source_id="an_cr_commissions",
         uid=uid,
         category="comptes_rendus",
@@ -312,6 +330,7 @@ def _fetch_cr(slug: str, session: str, num: int,
             "haystack_body": body,
         },
     )
+    return item, has_body
 
 
 def fetch_source(src: dict) -> list[Item]:
@@ -374,10 +393,27 @@ def fetch_source(src: dict) -> list[Item]:
                 # consommer de miss (ce n'est pas un 404)
                 num -= 1
                 continue
-            it = _fetch_cr(slug, session, num, label)
+            result = _fetch_cr(slug, session, num, label)
+            if result is None:
+                # Compat ascendante (anciennes signatures) : si _fetch_cr
+                # retourne None directement, c'est un 404.
+                miss += 1
+                num -= 1
+                continue
+            it, has_body = result
             if it is not None:
                 items.append(it)
-                scanned.add(num)
+                # 2026-04-27 — on ne marque comme `scanned` QUE les CR dont
+                # le PDF a été récupéré et extrait avec succès (>= 200 chars).
+                # Sans ce garde-fou, un CR dont le HTML est publié AVANT le
+                # PDF (cas réel cion-eco N076 audition Schelcher 14/04/2026)
+                # est ingéré avec haystack_body="" puis marqué scanned →
+                # jamais ré-ingéré quand le PDF arrive plus tard. Désormais,
+                # tant que `has_body` reste False, on ré-essaie au run
+                # suivant. Coût négligeable : 1 GET HTML + 1 GET PDF par
+                # CR pending par run.
+                if has_body:
+                    scanned.add(num)
                 if num > local_max:
                     local_max = num
                 new_count += 1

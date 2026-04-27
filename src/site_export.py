@@ -1193,6 +1193,67 @@ def _fix_agenda_row(r: dict) -> None:
                 if isinstance(raw, dict) else ""
             r["title"] = (organe_label or "Réunion parlementaire")[:220]
 
+    # 2026-04-27 — bascule du titre vers le sous-événement matché.
+    # Demande Cyril : pour les agendas multi-points (ODJ avec plusieurs
+    # auditions / discussions), le titre doit refléter le sous-événement
+    # dans lequel le keyword matché apparaît, pas systématiquement le
+    # 1er point. Sans cette logique, un agenda matchant sur sa 5e audition
+    # affichait toujours le titre de la 1re — incompréhensible côté
+    # lecteur.
+    #
+    # Logique : si `raw["all_titles"]` (peuplé par
+    # assemblee._normalize_agenda) contient ≥ 2 titres et que le titre
+    # courant ne contient AUCUN matched_keyword, on cherche le 1er
+    # sous-titre qui contient un kw matché et on le remonte comme titre
+    # principal (préfixé de l'organe quand pertinent). Idempotent : si
+    # le titre courant matche déjà, no-op.
+    if cat == "agenda":
+        raw = r.get("raw") or {}
+        if isinstance(raw, str):
+            try:
+                raw = json.loads(raw or "{}")
+            except Exception:
+                raw = {}
+        if isinstance(raw, dict):
+            all_titles = raw.get("all_titles") or []
+            kws_field = r.get("matched_keywords") or []
+            if isinstance(kws_field, str):
+                try:
+                    kws_field = json.loads(kws_field or "[]")
+                except Exception:
+                    kws_field = []
+            if (isinstance(all_titles, list) and isinstance(kws_field, list)
+                    and len(all_titles) >= 2 and kws_field):
+                from .keywords import _normalize as _kw_norm
+                normed_kws = [n for n in (_kw_norm(k) for k in kws_field
+                                            if isinstance(k, str)) if n]
+                cur_title = (r.get("title") or "").strip()
+                cur_norm = _kw_norm(cur_title)
+                already_relevant = any(k in cur_norm for k in normed_kws)
+                if not already_relevant:
+                    for t in all_titles:
+                        if not isinstance(t, str):
+                            continue
+                        t_norm = _kw_norm(t)
+                        if not any(k in t_norm for k in normed_kws):
+                            continue
+                        # Sous-titre matchant trouvé.
+                        new_t = t.strip().rstrip(" .—–-").strip()
+                        if not new_t:
+                            continue
+                        organe_label = (raw.get("organe_label") or "").strip()
+                        # Préfixe organe si pertinent (sauf si le sous-titre
+                        # commence déjà par "Audition" — il porte sa propre
+                        # contexte).
+                        if (organe_label
+                                and not new_t.lower().startswith(
+                                    ("audition", "table ronde",
+                                     "discussion", "examen"))):
+                            r["title"] = f"{organe_label} — {new_t}"[:220]
+                        else:
+                            r["title"] = new_t[:220]
+                        break
+
 
 def _window_for(category: str | None, source_id: str | None = None) -> int:
     """Fenêtre (jours) applicable à un (source_id, category) donné.

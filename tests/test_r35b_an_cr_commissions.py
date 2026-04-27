@@ -75,11 +75,13 @@ def test_parse_date_none_on_junk():
 
 
 def test_fetch_cr_returns_none_on_404(monkeypatch):
-    """Si la page HTML renvoie 404, _fetch_cr retourne None (CR pas publié)."""
+    """Si la page HTML renvoie 404, _fetch_cr retourne (None, False)
+    (CR pas publié — has_body=False par convention).
+    """
     monkeypatch.setattr(mod, "_fetch_silent", _stub_fetch_silent({}))
     # aussi : no pdf extractor appelé (html 404 → shortcut)
     result = mod._fetch_cr("cion-cedu", "2526", 99, "Commission X")
-    assert result is None
+    assert result == (None, False)
 
 
 def test_fetch_cr_builds_item_with_body(monkeypatch):
@@ -97,19 +99,24 @@ def test_fetch_cr_builds_item_with_body(monkeypatch):
             pdf_url: (200, fake_pdf),
         }),
     )
-    # Court-circuit pypdf : simule l'extraction
+    # Court-circuit pypdf : simule l'extraction (long body pour passer le
+    # seuil de 200 chars qui détermine has_body=True).
     monkeypatch.setattr(
         mod, "_extract_pdf_text",
-        lambda b, max_chars=10000: (
+        lambda b, max_chars=200000: (
             "La commission auditionne sur la gouvernance des autres sports "
-            "que le football. Table ronde — Philippe Bana, Fédération..."
+            "que le football. Table ronde — Philippe Bana, Fédération "
+            "française de handball, Brigitte Henriques, présidente du "
+            "Comité national olympique et sportif français, "
+            "ainsi que les autres parties prenantes du sport amateur."
         ),
     )
-    it = mod._fetch_cr(
+    it, has_body = mod._fetch_cr(
         "cion-cedu", "2526", 58,
         "Commission des affaires culturelles et de l'éducation",
     )
     assert it is not None
+    assert has_body is True  # PDF + body >= 200 chars → ne sera pas re-scrapé
     assert it.source_id == "an_cr_commissions"
     assert it.category == "comptes_rendus"
     assert it.chamber == "AN"
@@ -124,7 +131,11 @@ def test_fetch_cr_builds_item_with_body(monkeypatch):
 
 
 def test_fetch_cr_html_200_pdf_404_keeps_item(monkeypatch):
-    """HTML existe mais PDF en 404 : on garde un item (titre seul)."""
+    """HTML existe mais PDF en 404 : on garde un item (titre seul) MAIS
+    on retourne `has_body=False` pour que `fetch_source` ne marque pas le
+    num comme `scanned` — le PDF apparaîtra peut-être au prochain run
+    (cas réel cion-eco N076 audition Schelcher 14/04/2026).
+    """
     html_url = (
         "https://www.assemblee-nationale.fr/dyn/17/comptes-rendus/"
         "cion-cedu/l17cion-cedu2526058_compte-rendu"
@@ -133,9 +144,10 @@ def test_fetch_cr_html_200_pdf_404_keeps_item(monkeypatch):
         mod, "_fetch_silent",
         _stub_fetch_silent({html_url: (200, _html_ok())}),
     )
-    monkeypatch.setattr(mod, "_extract_pdf_text", lambda b, max_chars=10000: "")
-    it = mod._fetch_cr("cion-cedu", "2526", 58, "Commission X")
+    monkeypatch.setattr(mod, "_extract_pdf_text", lambda b, max_chars=200000: "")
+    it, has_body = mod._fetch_cr("cion-cedu", "2526", 58, "Commission X")
     assert it is not None
+    assert has_body is False
     # haystack_body vide mais item présent
     assert it.raw.get("haystack_body", "") == ""
 
@@ -154,7 +166,7 @@ def test_fetch_source_increments_state(monkeypatch, tmp_path):
 
     def fake_fetch_cr(slug, session, num, label):
         if slug != "cion-cedu":
-            return None
+            return None, False
         if num in (2, 3):
             from src.models import Item
             return Item(
@@ -168,8 +180,8 @@ def test_fetch_source_increments_state(monkeypatch, tmp_path):
                 summary="x",
                 raw={"haystack_body": "body", "slug": slug,
                      "session": session, "num": num},
-            )
-        return None
+            ), True  # has_body=True (PDF présent)
+        return None, False
 
     monkeypatch.setattr(mod, "_fetch_cr", fake_fetch_cr)
 
@@ -209,7 +221,7 @@ def test_fetch_source_resumes_from_state(monkeypatch, tmp_path):
 
     def fake_fetch_cr(slug, session, num, label):
         tried_nums.append(num)
-        return None  # aucune nouveauté au-delà
+        return None, False  # aucune nouveauté au-delà
 
     monkeypatch.setattr(mod, "_fetch_cr", fake_fetch_cr)
 
@@ -237,7 +249,7 @@ def test_fetch_source_commissions_as_list(monkeypatch, tmp_path):
 
     def fake(slug, session, num, label):
         called.append((slug, label))
-        return None
+        return None, False
 
     monkeypatch.setattr(mod, "_fetch_cr", fake)
     mod.fetch_source({
